@@ -50,7 +50,7 @@ try {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #ea1d2c;
+            --primary-color: #00a1ff;
             --secondary-color: #3e0d16;
             --accent-color: #f0f0f0;
             --text-color: #333;
@@ -348,6 +348,262 @@ try {
                 font-size: 1rem;
             }
         }
+
+        /* Agendamento Steps */
+        .agendamento-steps {
+            position: relative;
+            padding: 0 20px;
+        }
+        
+        .step {
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .step-circle {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background-color: var(--light-gray);
+            border: 2px solid var(--dark-gray);
+            color: var(--dark-gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 5px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .step.active .step-circle {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+        
+        .step.completed .step-circle {
+            background-color: #28a745;
+            border-color: #28a745;
+            color: white;
+        }
+        
+        .step-text {
+            font-size: 0.8rem;
+            color: var(--dark-gray);
+            margin-top: 5px;
+        }
+        
+        .progress-line {
+            position: absolute;
+            top: 17px;
+            left: 50px;
+            right: 50px;
+            height: 2px;
+            background-color: var(--light-gray);
+            z-index: 0;
+        }
+        
+        .progress-line::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            background-color: var(--primary-color);
+            transition: width 0.3s;
+            width: 0;
+        }
+        
+        /* Modal de Agendamento */
+        #agendamentoModal .modal-dialog {
+            max-width: 800px;
+        }
+        
+        #agendamentoModal .modal-content {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        #agendamentoModal .modal-header {
+            padding: 1.5rem;
+            background-color: var(--light-gray);
+            border-bottom: 1px solid var(--medium-gray);
+        }
+        
+        #agendamentoModal .modal-body {
+            padding: 1.5rem;
+        }
+        
+        #agendamentoModal .modal-footer {
+            padding: 1rem 1.5rem;
+            background-color: var(--light-gray);
+        }
+        
+        /* Etapas do agendamento */
+        .agendamento-steps {
+            margin-bottom: 2rem;
+        }
+        
+        .step {
+            position: relative;
+            z-index: 1;
+            flex: 1;
+            text-align: center;
+        }
+        
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--light-gray);
+            border: 2px solid var(--dark-gray);
+            color: var(--dark-gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .step.active .step-circle {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        .step.completed .step-circle {
+            background-color: #28a745;
+            border-color: #28a745;
+            color: white;
+        }
+        
+        .step-text {
+            font-size: 0.85rem;
+            color: var(--dark-gray);
+            margin-top: 8px;
+            font-weight: 500;
+        }
+        
+        .progress-line {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: var(--medium-gray);
+            z-index: 0;
+        }
+        
+        .progress-line::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            background-color: var(--primary-color);
+            transition: width 0.3s ease;
+            width: 0;
+        }
+        
+        /* Cards no Modal */
+        #agendamentoModal .service-card,
+        #agendamentoModal .professional-card {
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+            height: 100%;
+        }
+        
+        #agendamentoModal .service-card:hover,
+        #agendamentoModal .professional-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        #agendamentoModal .service-card.selected,
+        #agendamentoModal .professional-card.selected {
+            border-color: var(--primary-color);
+            background-color: rgba(234, 29, 44, 0.05);
+        }
+        
+        /* Calendário no Modal */
+        #modalCalendar {
+            background-color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .fc-day-selected {
+            background-color: rgba(234, 29, 44, 0.1) !important;
+            border: 2px solid var(--primary-color) !important;
+        }
+        
+        /* Horários no Modal */
+        .time-slot {
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid var(--medium-gray);
+            border-radius: 8px;
+        }
+        
+        .time-slot:hover {
+            background-color: var(--light-gray);
+            transform: translateY(-2px);
+        }
+        
+        .time-slot.selected {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        /* Resumo no Modal */
+        #modalResumoAgendamento {
+            background-color: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 8px;
+        }
+        
+        #modalResumoAgendamento h4 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+        }
+        
+        #modalResumoAgendamento .mb-3 {
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--medium-gray);
+        }
+        
+        #modalResumoAgendamento .mb-3:last-child {
+            border-bottom: none;
+        }
+        
+        /* Responsividade do Modal */
+        @media (max-width: 768px) {
+            #agendamentoModal .modal-dialog {
+                margin: 0.5rem;
+            }
+            
+            .step-text {
+                font-size: 0.75rem;
+            }
+            
+            .step-circle {
+                width: 35px;
+                height: 35px;
+                font-size: 0.9rem;
+            }
+            
+            #agendamentoModal .service-card,
+            #agendamentoModal .professional-card {
+                margin-bottom: 1rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -414,6 +670,80 @@ try {
                 <div class="modal-body text-center">
                     <div class="spinner-border" style="color: var(--primary-color);" role="status"></div>
                     <p class="mt-2 mb-0">Carregando...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Agendamento -->
+    <div class="modal fade" id="agendamentoModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Agendar Serviço</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Etapas do agendamento -->
+                    <div class="agendamento-steps mb-4">
+                        <div class="d-flex justify-content-between position-relative">
+                            <div class="step active" id="step1">
+                                <div class="step-circle">1</div>
+                                <div class="step-text">Serviço</div>
+                            </div>
+                            <div class="step" id="step2">
+                                <div class="step-circle">2</div>
+                                <div class="step-text">Profissional</div>
+                            </div>
+                            <div class="step" id="step3">
+                                <div class="step-circle">3</div>
+                                <div class="step-text">Data</div>
+                            </div>
+                            <div class="step" id="step4">
+                                <div class="step-circle">4</div>
+                                <div class="step-text">Horário</div>
+                            </div>
+                            <div class="step" id="step5">
+                                <div class="step-circle">5</div>
+                                <div class="step-text">Confirmação</div>
+                            </div>
+                            <div class="progress-line"></div>
+                        </div>
+                    </div>
+
+                    <!-- Conteúdo das etapas -->
+                    <div id="modalServicosSection">
+                        <div class="row" id="modalServicosList"></div>
+                    </div>
+
+                    <div id="modalProfissionaisSection" style="display: none;">
+                        <div class="row" id="modalProfissionaisList"></div>
+                    </div>
+
+                    <div id="modalDataSection" style="display: none;">
+                        <div id="modalCalendar"></div>
+                    </div>
+
+                    <div id="modalHorarioSection" style="display: none;">
+                        <div class="row" id="modalHorariosList"></div>
+                    </div>
+
+                    <div id="modalResumoSection" style="display: none;">
+                        <div class="card">
+                            <div class="card-body" id="modalResumoAgendamento"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" id="btnVoltar" style="display: none;">
+                        <i class="bi bi-arrow-left"></i> Voltar
+                    </button>
+                    <button type="button" class="btn btn-primary" id="btnAvancar" style="display: none;">
+                        Avançar <i class="bi bi-arrow-right"></i>
+                    </button>
+                    <button type="button" class="btn btn-success" id="btnConfirmar" style="display: none;">
+                        Confirmar Agendamento
+                    </button>
                 </div>
             </div>
         </div>

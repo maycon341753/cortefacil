@@ -1,9 +1,11 @@
-// Variáveis globais para armazenar o estado do agendamento
-var selectedSalao = null;
-var selectedServico = null;
-var selectedProfissional = null;
-var selectedData = null;
-var selectedHorario = null;
+// Variáveis globais para o modal de agendamento
+let currentStep = 1;
+let agendamentoModal;
+let selectedSalao = null;
+let selectedServico = null;
+let selectedProfissional = null;
+let selectedData = null;
+let selectedHorario = null;
 
 // Elementos DOM frequentemente utilizados
 var loadingModal;
@@ -16,29 +18,29 @@ document.addEventListener('DOMContentLoaded', () => {
     loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
     successModal = new bootstrap.Modal(document.getElementById('successModal'));
     errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+    agendamentoModal = new bootstrap.Modal(document.getElementById('agendamentoModal'));
 
     // Carregar salões ao iniciar
     loadSaloes();
-    showSection('saloesSection');
 
-    // Adicionar evento para o botão voltar
-    const voltarParaSaloesBtn = document.getElementById('voltarParaSaloes');
-    if (voltarParaSaloesBtn) {
-        voltarParaSaloesBtn.addEventListener('click', voltarParaSaloes);
-    }
+    // Configurar eventos dos botões do modal
+    document.getElementById('btnVoltar').addEventListener('click', voltarEtapa);
+    document.getElementById('btnAvancar').addEventListener('click', avancarEtapa);
+    document.getElementById('btnConfirmar').addEventListener('click', confirmarAgendamento);
 
-    // Logout
-    const logoutLink = document.getElementById('logoutLink');
-    if (logoutLink) {
-        logoutLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            window.location.href = '../php/logout.php';
-        });
-    }
+    // Evento para resetar o modal quando for fechado
+    document.getElementById('agendamentoModal').addEventListener('hidden.bs.modal', resetarModal);
 });
+
+function fecharModal(id){
+    const modalElement = document.getElementById(id);
+    const modalInstance = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+    modalInstance.hide();
+}
 
 // Função para mostrar mensagem de erro
 function showError(message) {
+    console.error('Erro:', message);
     document.getElementById('errorMessage').textContent = message;
     errorModal.show();
 }
@@ -51,15 +53,21 @@ function showSuccess(message) {
 
 // Função para mostrar loading
 function showLoading() {
+    console.log('Mostrando loading...');
     if (loadingModal) {
         loadingModal.show();
+    } else {
+        console.error('Loading modal não está inicializado');
     }
 }
 
 // Função para esconder loading
 function hideLoading() {
+    console.log('Escondendo loading...');
     if (loadingModal) {
         loadingModal.hide();
+    } else {
+        console.error('Loading modal não está inicializado');
     }
 }
 
@@ -206,41 +214,31 @@ function formatarEndereco(salao) {
     return partes.join(', ') || 'Endereço não disponível';
 }
 
-// Função para selecionar salão
+// Função para selecionar salão e iniciar agendamento
 async function selectSalao(salaoId) {
     try {
-        if (loadingModal) {
-            loadingModal.show();
-        } else {
-            console.error('Loading modal não inicializado');
-        }
         selectedSalao = salaoId;
+        currentStep = 1;
         
-        // Limpar seleções anteriores
-        selectedServico = null;
-        selectedProfissional = null;
-        selectedData = null;
-        selectedHorario = null;
+        // Mostrar modal de agendamento
+        agendamentoModal.show();
         
-        // Esconder todas as seções e mostrar apenas a de serviços
-        hideAllSections();
-        const servicosSection = document.getElementById('servicosSection');
-        if (servicosSection && servicosSection.style) {
-            servicosSection.style.display = 'block';
-        } else {
-            console.error('Seção de serviços não encontrada');
-            return;
-        }
+        // Atualizar indicador de progresso
+        updateProgressIndicator(1);
         
+        // Carregar serviços
         await loadServicos(salaoId);
-        if (loadingModal) {
-            loadingModal.hide();
-        }
+        
+        // Mostrar botões apropriados
+        document.getElementById('btnVoltar').style.display = 'none';
+        document.getElementById('btnAvancar').style.display = 'none';
+        document.getElementById('btnConfirmar').style.display = 'none';
+
+        fecharModal('loadingModal');
+        
     } catch (error) {
-        if (loadingModal) {
-            loadingModal.hide();
-        }
-        showError(error.message);
+        console.error('Erro ao iniciar agendamento:', error);
+        showError(error.message || 'Erro ao iniciar agendamento');
     }
 }
 
@@ -280,16 +278,27 @@ function hideAllSections() {
 async function loadServicos(salaoId) {
     try {
         const response = await fetch(`../php/listar_servicos.php?salao_id=${salaoId}`);
+        
+        if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status}`);
+        }
+        
         const data = await response.json();
-
+        
         if (data.status !== 'success') {
             throw new Error(data.message || 'Erro ao carregar serviços');
         }
 
-        const servicosContainer = document.getElementById('servicosList');
+        const servicosContainer = document.getElementById('modalServicosList');
+        
+        if (!data.data || !Array.isArray(data.data) || data.data.length === 0) {
+            servicosContainer.innerHTML = '<div class="col-12"><p class="text-center">Nenhum serviço disponível para este salão.</p></div>';
+            return;
+        }
+
         servicosContainer.innerHTML = data.data.map(servico => `
             <div class="col-md-4 mb-3">
-                <div class="card service-card h-100" onclick="selectServico(${servico.id})">
+                <div class="card service-card h-100" onclick="selectServicoModal(${servico.id}, this)">
                     <div class="card-body">
                         <h5 class="card-title">${servico.nome}</h5>
                         <p class="card-text">${servico.preco_formatado}</p>
@@ -298,39 +307,55 @@ async function loadServicos(salaoId) {
                 </div>
             </div>
         `).join('');
+
+        fecharModal('loadingModal');
+
     } catch (error) {
-        showError(error.message);
+        console.error('Erro ao carregar serviços:', error);
+        showError('Não foi possível carregar os serviços. Por favor, tente novamente.');
+    } finally {
+        hideLoading();
     }
 }
 
-// Função para selecionar serviço
-async function selectServico(servicoId) {
+// Função para selecionar serviço no modal
+function selectServicoModal(servicoId, element) {
     selectedServico = servicoId;
     
-    const profissionaisSection = document.getElementById('profissionaisSection');
-    if (profissionaisSection && profissionaisSection.style) {
-        profissionaisSection.style.display = 'block';
-    } else {
-        console.error('Seção de profissionais não encontrada');
-    }
+    // Remover seleção anterior
+    document.querySelectorAll('.service-card').forEach(card => {
+        card.classList.remove('selected');
+    });
     
-    await loadProfissionais(selectedSalao, servicoId);
+    // Adicionar seleção ao card clicado
+    element.classList.add('selected');
+    
+    // Mostrar botão avançar
+    document.getElementById('btnAvancar').style.display = 'block';
 }
 
 // Função para carregar profissionais
-async function loadProfissionais(salaoId, servicoId) {
+async function loadProfissionais(salaoId) {
     try {
         const response = await fetch(`../php/listar_profissionais.php?salao_id=${salaoId}`);
-        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status}`);
+        }
 
+        const data = await response.json();
         if (data.status !== 'success') {
             throw new Error(data.mensagem || 'Erro ao carregar profissionais');
         }
 
-        const profissionaisContainer = document.getElementById('profissionaisList');
+        const profissionaisContainer = document.getElementById('modalProfissionaisList');
+        if (!data.profissionais || !Array.isArray(data.profissionais) || data.profissionais.length === 0) {
+            profissionaisContainer.innerHTML = '<div class="col-12"><p class="text-center">Nenhum profissional disponível.</p></div>';
+            return;
+        }
+
         profissionaisContainer.innerHTML = data.profissionais.map(profissional => `
             <div class="col-md-4 mb-3">
-                <div class="card service-card" onclick="selectProfissional(${profissional.id})">
+                <div class="card professional-card" onclick="selectProfissionalModal(${profissional.id}, this)">
                     <div class="card-body text-center">
                         <img src="${profissional.foto || '../assets/default-avatar.png'}" class="professional-avatar mb-3">
                         <h5 class="card-title">${profissional.nome}</h5>
@@ -340,30 +365,32 @@ async function loadProfissionais(salaoId, servicoId) {
             </div>
         `).join('');
     } catch (error) {
-        showError(error.message);
+        console.error('Erro ao carregar profissionais:', error);
+        throw new Error('Não foi possível carregar os profissionais. Por favor, tente novamente.');
     }
 }
 
-// Função para selecionar profissional
-function selectProfissional(profissionalId) {
+// Função para selecionar profissional no modal
+function selectProfissionalModal(profissionalId, element) {
     selectedProfissional = profissionalId;
     
-    const dataSection = document.getElementById('dataSection');
-    if (dataSection && dataSection.style) {
-        dataSection.style.display = 'block';
-    } else {
-        console.error('Seção de data não encontrada');
-    }
+    // Remover seleção anterior
+    document.querySelectorAll('.professional-card').forEach(card => {
+        card.classList.remove('selected');
+    });
     
-    initializeDatePicker();
+    // Adicionar seleção ao card clicado
+    element.classList.add('selected');
+    
+    // Mostrar botão avançar
+    document.getElementById('btnAvancar').style.display = 'block';
 }
 
-// Função para inicializar o calendário
-function initializeDatePicker() {
-    const calendarEl = document.getElementById('calendar');
+// Função para inicializar o calendário no modal
+function initializeModalCalendar() {
+    const calendarEl = document.getElementById('modalCalendar');
     if (!calendarEl) {
-        console.error('Elemento do calendário não encontrado');
-        return;
+        throw new Error('Elemento do calendário não encontrado');
     }
     
     // Limpar qualquer conteúdo existente
@@ -373,129 +400,99 @@ function initializeDatePicker() {
     const trintaDiasDepois = new Date();
     trintaDiasDepois.setDate(hoje.getDate() + 30);
 
-    try {
-        const calendar = new FullCalendar.Calendar(calendarEl, {
-            height: 'auto',
-            initialView: 'dayGridMonth',
-            locale: 'pt-br',
-            headerToolbar: {
-                left: 'prev,next today',
-                center: 'title',
-                right: ''
-            },
-            buttonText: {
-                today: 'Hoje'
-            },
-            validRange: {
-                start: hoje,
-                end: trintaDiasDepois
-            },
-            selectable: true,
-            selectMirror: true,
-            unselectAuto: false,
-            dateClick: async function(info) {
-                // Remover seleção anterior
-                document.querySelectorAll('.fc-day-selected').forEach(el => {
-                    el.classList.remove('fc-day-selected');
-                });
-                
-                // Adicionar classe à data selecionada
-                info.dayEl.classList.add('fc-day-selected');
-                
-                // Atualizar data selecionada
-                selectedData = info.date;
-                await loadHorarios();
-            },
-            datesSet: function(dateInfo) {
-                // Verificar se a data selecionada ainda está visível
-                if (selectedData && (selectedData < dateInfo.start || selectedData > dateInfo.end)) {
-                    selectedData = null;
-                }
-            }
-        });
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        height: 'auto',
+        initialView: 'dayGridMonth',
+        locale: 'pt-br',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: ''
+        },
+        buttonText: {
+            today: 'Hoje'
+        },
+        validRange: {
+            start: hoje,
+            end: trintaDiasDepois
+        },
+        selectable: true,
+        selectMirror: true,
+        unselectAuto: false,
+        dateClick: async function(info) {
+            // Remover seleção anterior
+            document.querySelectorAll('.fc-day-selected').forEach(el => {
+                el.classList.remove('fc-day-selected');
+            });
+            
+            // Adicionar classe à data selecionada
+            info.dayEl.classList.add('fc-day-selected');
+            
+            // Atualizar data selecionada
+            selectedData = info.date;
+            
+            // Mostrar botão avançar
+            document.getElementById('btnAvancar').style.display = 'block';
+        }
+    });
 
-        calendar.render();
-        console.log('Calendário inicializado com sucesso');
-
-        // Adicionar estilos personalizados para a data selecionada
-        const style = document.createElement('style');
-        style.textContent = `
-            .fc-day-selected {
-                background-color: rgba(25, 135, 84, 0.2) !important;
-                border: 2px solid #198754 !important;
-            }
-            .fc-daygrid-day-frame {
-                min-height: 30px !important;
-            }
-            .fc-daygrid-day-top {
-                padding: 2px !important;
-            }
-            .fc-col-header-cell {
-                padding: 2px !important;
-            }
-            .fc .fc-toolbar {
-                margin-bottom: 0.5rem !important;
-            }
-            .fc .fc-toolbar-title {
-                font-size: 1.2em !important;
-            }
-            .fc-header-toolbar {
-                margin-bottom: 0.5em !important;
-            }
-            .fc-button {
-                padding: 0.2em 0.65em !important;
-                font-size: 0.9em !important;
-            }
-        `;
-        document.head.appendChild(style);
-    } catch (error) {
-        console.error('Erro ao inicializar o calendário:', error);
-    }
+    calendar.render();
 }
 
 // Função para carregar horários disponíveis
 async function loadHorarios() {
     try {
+        if (!selectedData) {
+            throw new Error('Data não selecionada');
+        }
+
         const formattedDate = selectedData.toISOString().split('T')[0];
         const response = await fetch(`../php/listar_horarios_disponiveis.php?salao_id=${selectedSalao}&profissional_id=${selectedProfissional}&data=${formattedDate}`);
-        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status}`);
+        }
 
+        const data = await response.json();
         if (data.status !== 'success') {
             throw new Error(data.message || 'Erro ao carregar horários');
         }
 
-        document.getElementById('horarioSection').style.display = 'block';
-        const horariosContainer = document.getElementById('horariosList');
+        const horariosContainer = document.getElementById('modalHorariosList');
+        if (!data.data || !Array.isArray(data.data) || data.data.length === 0) {
+            horariosContainer.innerHTML = '<div class="col-12"><p class="text-center">Nenhum horário disponível para esta data.</p></div>';
+            return;
+        }
+
         horariosContainer.innerHTML = data.data.map(horario => `
-            <div class="col-md-2 mb-2">
-                <div class="card time-slot" onclick="selectHorario('${horario}')">
+            <div class="col-md-3 col-sm-4 col-6 mb-2">
+                <div class="card time-slot" onclick="selectHorarioModal('${horario}', this)">
                     <div class="card-body text-center">
-                        <h5 class="card-title">${horario}</h5>
+                        <h5 class="card-title mb-0">${horario}</h5>
                     </div>
                 </div>
             </div>
         `).join('');
     } catch (error) {
-        showError(error.message);
+        console.error('Erro ao carregar horários:', error);
+        throw new Error('Não foi possível carregar os horários. Por favor, tente novamente.');
     }
 }
 
-// Função para selecionar horário
-function selectHorario(horario) {
+// Função para selecionar horário no modal
+function selectHorarioModal(horario, element) {
     selectedHorario = horario;
+    
+    // Remover seleção anterior
     document.querySelectorAll('.time-slot').forEach(slot => {
         slot.classList.remove('selected');
     });
-    event.currentTarget.classList.add('selected');
     
-    const resumoSection = document.getElementById('resumoSection');
-    if (resumoSection && resumoSection.style) {
-        resumoSection.style.display = 'block';
-    } else {
-        console.error('Seção de resumo não encontrada');
-    }
+    // Adicionar seleção ao slot clicado
+    element.classList.add('selected');
     
-    updateResumo();
+    // Mostrar botão avançar
+    document.getElementById('btnAvancar').style.display = 'block';
 }
 
 // Função para atualizar o resumo do agendamento
@@ -619,6 +616,7 @@ async function confirmarAgendamento() {
                     statusElement.classList.add('alert-success');
                     setTimeout(() => {
                         paymentModal.hide();
+                        fecharModal('paymentModal');
                         showSection('meusAgendamentosSection');
                         loadMeusAgendamentos();
                     }, 2000);
@@ -816,4 +814,186 @@ async function salvarPerfil() {
         hideLoading();
         showError(error.message);
     }
+}
+
+// Função para atualizar indicador de progresso
+function updateProgressIndicator(step) {
+    // Atualizar círculos
+    for (let i = 1; i <= 5; i++) {
+        const stepElement = document.getElementById(`step${i}`);
+        if (i < step) {
+            stepElement.classList.add('completed');
+            stepElement.classList.remove('active');
+        } else if (i === step) {
+            stepElement.classList.add('active');
+            stepElement.classList.remove('completed');
+        } else {
+            stepElement.classList.remove('active', 'completed');
+        }
+    }
+    
+    // Atualizar linha de progresso
+    const progressLine = document.querySelector('.progress-line');
+    const progress = ((step - 1) / 4) * 100;
+    progressLine.style.width = `${progress}%`;
+}
+
+// Função para mostrar seção apropriada
+function showModalSection(step) {
+    const sections = {
+        1: 'modalServicosSection',
+        2: 'modalProfissionaisSection',
+        3: 'modalDataSection',
+        4: 'modalHorarioSection',
+        5: 'modalResumoSection'
+    };
+    
+    if(step == 3){
+        let interval = setInterval(function () { 
+            clearInterval(interval);
+            document.querySelector('.fc-next-button ').click();
+            document.querySelector('.fc-prev-button ').click();
+        }, 100)
+
+    }
+
+    // Esconder todas as seções
+    Object.values(sections).forEach(sectionId => {
+        document.getElementById(sectionId).style.display = 'none';
+    });
+    
+    // Mostrar seção atual
+    document.getElementById(sections[step]).style.display = 'block';
+}
+
+// Função para avançar etapa
+async function avancarEtapa() {
+    if (!validarEtapaAtual()) {
+        return;
+    }
+    
+    currentStep++;
+    updateProgressIndicator(currentStep);
+    
+    // Mostrar/esconder botões apropriados
+    document.getElementById('btnVoltar').style.display = 'block';
+    document.getElementById('btnAvancar').style.display = currentStep < 5 ? 'block' : 'none';
+    document.getElementById('btnConfirmar').style.display = currentStep === 5 ? 'block' : 'none';
+    
+    try {
+        showLoading();
+        switch(currentStep) {
+            case 2:
+                await loadProfissionais(selectedSalao);
+                break;
+            case 3:
+                initializeModalCalendar();
+                break;
+            case 4:
+                await loadHorarios();
+                break;
+            case 5:
+                updateModalResumo();
+                break;
+        }
+    } catch (error) {
+        console.error('Erro ao carregar dados da etapa:', error);
+        showError(error.message);
+        voltarEtapa();
+    } finally {
+        hideLoading();
+    }
+    
+    showModalSection(currentStep);
+}
+
+// Função para voltar etapa
+function voltarEtapa() {
+    if (currentStep > 1) {
+        currentStep--;
+        updateProgressIndicator(currentStep);
+        
+        // Mostrar/esconder botões apropriados
+        document.getElementById('btnVoltar').style.display = currentStep > 1 ? 'block' : 'none';
+        document.getElementById('btnAvancar').style.display = 'block';
+        document.getElementById('btnConfirmar').style.display = 'none';
+        
+        showModalSection(currentStep);
+    }
+}
+
+// Função para validar etapa atual
+function validarEtapaAtual() {
+    switch(currentStep) {
+        case 1:
+            if (!selectedServico) {
+                showError('Por favor, selecione um serviço para continuar.');
+                return false;
+            }
+            break;
+        case 2:
+            if (!selectedProfissional) {
+                showError('Por favor, selecione um profissional para continuar.');
+                return false;
+            }
+            break;
+        case 3:
+            if (!selectedData) {
+                showError('Por favor, selecione uma data para continuar.');
+                return false;
+            }
+            break;
+        case 4:
+            if (!selectedHorario) {
+                showError('Por favor, selecione um horário para continuar.');
+                return false;
+            }
+            break;
+    }
+    return true;
+}
+
+// Função para resetar modal
+function resetarModal() {
+    currentStep = 1;
+    selectedServico = null;
+    selectedProfissional = null;
+    selectedData = null;
+    selectedHorario = null;
+    
+    updateProgressIndicator(1);
+    showModalSection(1);
+    
+    // Resetar seleções visuais
+    document.querySelectorAll('.service-card, .professional-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    // Resetar botões
+    document.getElementById('btnVoltar').style.display = 'none';
+    document.getElementById('btnAvancar').style.display = 'none';
+    document.getElementById('btnConfirmar').style.display = 'none';
+}
+
+// Função para atualizar resumo no modal
+function updateModalResumo() {
+    const formattedDate = selectedData.toLocaleDateString('pt-BR');
+    document.getElementById('modalResumoAgendamento').innerHTML = `
+        <h4 class="mb-4">Resumo do Agendamento</h4>
+        <div class="mb-3">
+            <strong>Serviço:</strong> ${document.querySelector('.service-card.selected .card-title').textContent}
+        </div>
+        <div class="mb-3">
+            <strong>Profissional:</strong> ${document.querySelector('.professional-card.selected .card-title').textContent}
+        </div>
+        <div class="mb-3">
+            <strong>Data:</strong> ${formattedDate}
+        </div>
+        <div class="mb-3">
+            <strong>Horário:</strong> ${selectedHorario}
+        </div>
+        <div class="mb-3">
+            <strong>Valor:</strong> ${document.querySelector('.service-card.selected .card-text').textContent}
+        </div>
+    `;
 }
