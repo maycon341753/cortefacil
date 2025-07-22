@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Salões</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .salao { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Teste de Carregamento de Salões</h1>
+    <button onclick="testarSaloes()">Testar Carregamento</button>
+    <div id="resultado"></div>
+
+    <script>
+        async function testarSaloes() {
+            const resultado = document.getElementById('resultado');
+            resultado.innerHTML = '<p>Carregando...</p>';
+            
+            try {
+                console.log('Fazendo requisição para listar_saloes.php...');
+                const response = await fetch('php/listar_saloes.php');
+                
+                console.log('Status da resposta:', response.status);
+                console.log('Headers:', response.headers);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const text = await response.text();
+                console.log('Resposta como texto:', text);
+                
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    throw new Error('Resposta não é um JSON válido: ' + text);
+                }
+                
+                console.log('Dados parseados:', data);
+                
+                if (data.status === 'success') {
+                    resultado.innerHTML = `
+                        <div class="success">
+                            <h3>Sucesso! ${data.saloes.length} salões encontrados:</h3>
+                            ${data.saloes.map(salao => `
+                                <div class="salao">
+                                    <strong>${salao.nome}</strong><br>
+                                    Cidade: ${salao.cidade}<br>
+                                    Horário: ${salao.horario_abertura} - ${salao.horario_fechamento}<br>
+                                    Profissionais: ${salao.profissionais.length}<br>
+                                    Serviços: ${salao.servicos.length}
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                } else {
+                    resultado.innerHTML = `<div class="error">Erro: ${data.message}</div>`;
+                }
+                
+            } catch (error) {
+                console.error('Erro:', error);
+                resultado.innerHTML = `<div class="error">Erro: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Parceiro - CorteFácil</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo h1 {
+            color: #0d6efd;
+        }
+        .alert-success {
+            display: none;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="login-container">
+            <div class="logo">
+                <h1>CorteFácil</h1>
+                <p class="text-muted">Portal do Parceiro</p>
+            </div>
+            
+            <div class="alert alert-success" id="successMessage">Login realizado com sucesso! Redirecionando...</div>
+            
+            <form id="loginForm">
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="text" class="form-control" id="email" name="email" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="senha" class="form-label">Senha</label>
+                    <input type="password" class="form-control" id="senha" name="senha" required>
+                </div>
+
+                <div class="alert alert-danger d-none" id="errorMessage"></div>
+                
+                <button type="submit" class="btn btn-primary w-100">Entrar</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+            const form = document.getElementById('loginForm');
+            
+            errorMessage.classList.add('d-none');
+            successMessage.style.display = 'none';
+            
+            const formData = new FormData();
+            formData.append('email', document.getElementById('email').value);
+            formData.append('senha', document.getElementById('senha').value);
+            
+            try {
+                const response = await fetch('php/parceiro_login.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    // Mostra mensagem de sucesso e desabilita o formulário
+                    successMessage.style.display = 'block';
+                    form.style.opacity = '0.5';
+                    form.style.pointerEvents = 'none';
+                    
+                    // Redireciona após um pequeno delay
+                    setTimeout(() => {
+                        window.location.href = 'salao/funcionarios.php';
+                    }, 1500);
+                } else {
+                    errorMessage.textContent = data.mensagem;
+                    errorMessage.classList.remove('d-none');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                errorMessage.textContent = 'Erro ao realizar login. Tente novamente.';
+                errorMessage.classList.remove('d-none');
+            }
+        });
+    </script>
+</body>
+</html>

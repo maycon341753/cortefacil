@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Menu Perfil Admin - CorteFácil</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .test-card {
+            margin-bottom: 20px;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4">
+            <i class="fas fa-user-cog me-2"></i>
+            Teste Menu Perfil Administrador
+        </h1>
+
+        <!-- Card de Login -->
+        <div class="card test-card">
+            <div class="card-header">
+                <h5><i class="fas fa-sign-in-alt me-2"></i>1. Login como Administrador</h5>
+            </div>
+            <div class="card-body">
+                <p>Primeiro, faça login como administrador para testar o menu de perfil.</p>
+                <button class="btn btn-primary" onclick="loginAdmin()">
+                    <i class="fas fa-sign-in-alt me-2"></i>Login Admin
+                </button>
+                <div id="loginResult" class="result" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Card de Verificação de Sessão -->
+        <div class="card test-card">
+            <div class="card-header">
+                <h5><i class="fas fa-user-check me-2"></i>2. Verificar Sessão</h5>
+            </div>
+            <div class="card-body">
+                <p>Verificar se a sessão do administrador está ativa.</p>
+                <button class="btn btn-info" onclick="verificarSessao()">
+                    <i class="fas fa-search me-2"></i>Verificar Sessão
+                </button>
+                <div id="sessaoResult" class="result" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Card de Teste do Perfil -->
+        <div class="card test-card">
+            <div class="card-header">
+                <h5><i class="fas fa-user me-2"></i>3. Testar Obter Perfil</h5>
+            </div>
+            <div class="card-body">
+                <p>Testar se a API de obter perfil está funcionando.</p>
+                <button class="btn btn-success" onclick="testarObterPerfil()">
+                    <i class="fas fa-user me-2"></i>Obter Perfil
+                </button>
+                <div id="perfilResult" class="result" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Card de Teste de Atualização -->
+        <div class="card test-card">
+            <div class="card-header">
+                <h5><i class="fas fa-edit me-2"></i>4. Testar Atualização de Perfil</h5>
+            </div>
+            <div class="card-body">
+                <p>Testar a atualização de nome e email do administrador.</p>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="testNome" class="form-label">Nome</label>
+                        <input type="text" class="form-control" id="testNome" value="Admin Teste">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="testEmail" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="testEmail" value="admin@teste.com">
+                    </div>
+                </div>
+                <button class="btn btn-warning mt-3" onclick="testarAtualizarPerfil()">
+                    <i class="fas fa-save me-2"></i>Atualizar Perfil
+                </button>
+                <div id="atualizarResult" class="result" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Card de Teste de Senha -->
+        <div class="card test-card">
+            <div class="card-header">
+                <h5><i class="fas fa-key me-2"></i>5. Testar Alteração de Senha</h5>
+            </div>
+            <div class="card-body">
+                <p>Testar a alteração de senha do administrador.</p>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label for="testSenhaAtual" class="form-label">Senha Atual</label>
+                        <input type="password" class="form-control" id="testSenhaAtual" value="123456">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="testNovaSenha" class="form-label">Nova Senha</label>
+                        <input type="password" class="form-control" id="testNovaSenha" value="654321">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="testConfirmarSenha" class="form-label">Confirmar Senha</label>
+                        <input type="password" class="form-control" id="testConfirmarSenha" value="654321">
+                    </div>
+                </div>
+                <button class="btn btn-danger mt-3" onclick="testarAlterarSenha()">
+                    <i class="fas fa-key me-2"></i>Alterar Senha
+                </button>
+                <div id="senhaResult" class="result" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Card de Acesso ao Painel -->
+        <div class="card test-card">
+            <div class="card-header">
+                <h5><i class="fas fa-external-link-alt me-2"></i>6. Acessar Painel Admin</h5>
+            </div>
+            <div class="card-body">
+                <p>Após os testes, acesse o painel administrativo para ver o menu de perfil funcionando.</p>
+                <a href="admin/painel.html" class="btn btn-primary" target="_blank">
+                    <i class="fas fa-external-link-alt me-2"></i>Abrir Painel Admin
+                </a>
+            </div>
+        </div>
+
+        <!-- Card de Teste Completo -->
+        <div class="card test-card">
+            <div class="card-header">
+                <h5><i class="fas fa-play-circle me-2"></i>Teste Completo</h5>
+            </div>
+            <div class="card-body">
+                <p>Execute todos os testes em sequência.</p>
+                <button class="btn btn-success btn-lg" onclick="testeCompleto()">
+                    <i class="fas fa-play-circle me-2"></i>Executar Teste Completo
+                </button>
+                <div id="testeCompletoResult" class="result" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.className = `result ${type}`;
+            element.innerHTML = message;
+            element.style.display = 'block';
+        }
+
+        function loginAdmin() {
+            const dados = {
+                email: 'admin@cortefacil.com',
+                senha: '123456'
+            };
+
+            fetch('php/admin_login.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(dados)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    showResult('loginResult', `✅ Login realizado com sucesso! Usuário: ${data.user.nome}`, 'success');
+                } else {
+                    showResult('loginResult', `❌ Erro no login: ${data.message}`, 'error');
+                }
+            })
+            .catch(error => {
+                showResult('loginResult', `❌ Erro na requisição: ${error.message}`, 'error');
+            });
+        }
+
+        function verificarSessao() {
+            fetch('php/verificar_sessao.php')
+            .then(response => response.json())
+            .then(data => {
+                if (data.logado) {
+                    showResult('sessaoResult', `✅ Sessão ativa! Usuário: ${data.nome} (${data.tipo})`, 'success');
+                } else {
+                    showResult('sessaoResult', '❌ Nenhuma sessão ativa', 'error');
+                }
+            })
+            .catch(error => {
+                showResult('sessaoResult', `❌ Erro ao verificar sessão: ${error.message}`, 'error');
+            });
+        }
+
+        function testarObterPerfil() {
+            fetch('php/admin_obter_perfil.php')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    showResult('perfilResult', 
+                        `✅ Perfil obtido com sucesso!<br>
+                        <strong>ID:</strong> ${data.admin.id}<br>
+                        <strong>Nome:</strong> ${data.admin.nome}<br>
+                        <strong>Email:</strong> ${data.admin.email}`, 'success');
+                } else {
+                    showResult('perfilResult', `❌ Erro ao obter perfil: ${data.message}`, 'error');
+                }
+            })
+            .catch(error => {
+                showResult('perfilResult', `❌ Erro na requisição: ${error.message}`, 'error');
+            });
+        }
+
+        function testarAtualizarPerfil() {
+            const nome = document.getElementById('testNome').value;
+            const email = document.getElementById('testEmail').value;
+
+            const dados = {
+                nome: nome,
+                email: email
+            };
+
+            fetch('php/admin_atualizar_perfil.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(dados)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    showResult('atualizarResult', 
+                        `✅ Perfil atualizado com sucesso!<br>
+                        <strong>Nome:</strong> ${data.admin.nome}<br>
+                        <strong>Email:</strong> ${data.admin.email}`, 'success');
+                } else {
+                    showResult('atualizarResult', `❌ Erro ao atualizar perfil: ${data.message}`, 'error');
+                }
+            })
+            .catch(error => {
+                showResult('atualizarResult', `❌ Erro na requisição: ${error.message}`, 'error');
+            });
+        }
+
+        function testarAlterarSenha() {
+            const senhaAtual = document.getElementById('testSenhaAtual').value;
+            const novaSenha = document.getElementById('testNovaSenha').value;
+            const confirmarSenha = document.getElementById('testConfirmarSenha').value;
+
+            if (novaSenha !== confirmarSenha) {
+                showResult('senhaResult', '❌ Confirmação de senha não confere', 'error');
+                return;
+            }
+
+            const dados = {
+                nome: document.getElementById('testNome').value,
+                email: document.getElementById('testEmail').value,
+                senha_atual: senhaAtual,
+                nova_senha: novaSenha
+            };
+
+            fetch('php/admin_atualizar_perfil.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(dados)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    showResult('senhaResult', '✅ Senha alterada com sucesso!', 'success');
+                    // Atualizar campo de senha atual para próximos testes
+                    document.getElementById('testSenhaAtual').value = novaSenha;
+                } else {
+                    showResult('senhaResult', `❌ Erro ao alterar senha: ${data.message}`, 'error');
+                }
+            })
+            .catch(error => {
+                showResult('senhaResult', `❌ Erro na requisição: ${error.message}`, 'error');
+            });
+        }
+
+        async function testeCompleto() {
+            showResult('testeCompletoResult', '🔄 Executando teste completo...', 'info');
+            
+            try {
+                // 1. Login
+                await new Promise(resolve => {
+                    loginAdmin();
+                    setTimeout(resolve, 1000);
+                });
+
+                // 2. Verificar sessão
+                await new Promise(resolve => {
+                    verificarSessao();
+                    setTimeout(resolve, 1000);
+                });
+
+                // 3. Obter perfil
+                await new Promise(resolve => {
+                    testarObterPerfil();
+                    setTimeout(resolve, 1000);
+                });
+
+                // 4. Atualizar perfil
+                await new Promise(resolve => {
+                    testarAtualizarPerfil();
+                    setTimeout(resolve, 1000);
+                });
+
+                showResult('testeCompletoResult', '✅ Teste completo executado! Verifique os resultados acima.', 'success');
+                
+            } catch (error) {
+                showResult('testeCompletoResult', `❌ Erro no teste completo: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

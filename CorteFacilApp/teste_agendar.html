@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Agendar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Teste de Agendamento</h1>
+        <p>Clique no botão abaixo para testar a função selectSalao</p>
+        <button id="testButton" class="btn btn-primary">Testar Agendar Agora</button>
+        <div id="result" class="mt-3"></div>
+    </div>
+
+    <!-- Modais -->
+    <div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center">
+                    <div class="spinner-border" style="color: #ea1d2c;" role="status"></div>
+                    <p class="mt-2 mb-0">Carregando...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="errorModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center">
+                    <i class="bi bi-exclamation-circle text-danger" style="font-size: 3rem;"></i>
+                    <p class="mt-2 mb-0" id="errorMessage"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Variáveis globais
+        var loadingModal;
+        var errorModal;
+
+        // Inicializar modais quando o DOM estiver carregado
+        document.addEventListener('DOMContentLoaded', () => {
+            // Inicializar modais
+            loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+            errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+
+            // Adicionar evento ao botão de teste
+            document.getElementById('testButton').addEventListener('click', testSelectSalao);
+        });
+
+        // Função para mostrar mensagem de erro
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            errorModal.show();
+        }
+
+        // Função para mostrar loading
+        function showLoading() {
+            if (loadingModal) {
+                loadingModal.show();
+            } else {
+                console.error('Loading modal não inicializado');
+            }
+        }
+
+        // Função para esconder loading
+        function hideLoading() {
+            if (loadingModal) {
+                loadingModal.hide();
+            } else {
+                console.error('Loading modal não inicializado');
+            }
+        }
+
+        // Função de teste para simular selectSalao
+        async function testSelectSalao() {
+            try {
+                showLoading();
+                document.getElementById('result').innerHTML = '<div class="alert alert-info">Iniciando teste...</div>';
+                
+                // Simular um atraso de rede
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // Simular carregamento de serviços
+                document.getElementById('result').innerHTML += '<div class="alert alert-success">Serviços carregados com sucesso!</div>';
+                
+                hideLoading();
+            } catch (error) {
+                hideLoading();
+                showError(error.message || 'Ocorreu um erro durante o teste');
+            }
+        }
+    </script>
+</body>
+</html>

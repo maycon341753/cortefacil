@@ -1,0 +1,75 @@
+<?php
+require_once 'conexao.php';
+session_start();
+
+header('Content-Type: application/json');
+
+try {
+    // Verificar se o usuário está logado
+    if (!isset($_SESSION['id']) || !isset($_SESSION['tipo'])) {
+        throw new Exception('Usuário não autenticado');
+    }
+    
+    // Verificar se é um cliente
+    if ($_SESSION['tipo'] !== 'cliente') {
+        throw new Exception('Acesso negado');
+    }
+
+    $pdo = getConexao();
+    
+    $sql = "SELECT 
+                a.id,
+                a.data,
+                a.hora,
+                a.status,
+                s.nome_fantasia as salao,
+                p.nome as profissional,
+                serv.nome as servico,
+                serv.preco
+            FROM agendamentos a
+            JOIN saloes s ON a.salao_id = s.id
+            JOIN profissionais p ON a.profissional_id = p.id
+            JOIN servicos serv ON a.servico_id = serv.id
+            WHERE a.cliente_id = :cliente_id
+            ORDER BY a.data DESC, a.hora DESC";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute(['cliente_id' => $_SESSION['id']]);
+    $agendamentos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Formata as datas e valores para exibição
+    $agendamentosFormatados = array_map(function($agendamento) {
+        // Formata a data para o padrão brasileiro
+        $data = new DateTime($agendamento['data']);
+        $agendamento['data'] = $data->format('d/m/Y');
+        
+        // Formata a hora (remove os segundos)
+        $agendamento['hora'] = substr($agendamento['hora'], 0, 5);
+        
+        // Formata o preço
+        $agendamento['preco'] = 'R$ ' . number_format($agendamento['preco'], 2, ',', '.');
+        
+        return $agendamento;
+    }, $agendamentos);
+
+    echo json_encode([
+        'status' => 'success',
+        'data' => $agendamentosFormatados
+    ]);
+
+} catch (Exception $e) {
+    error_log("Erro ao buscar agendamentos: " . $e->getMessage());
+    http_response_code(500);
+    echo json_encode([
+        'status' => 'error',
+        'message' => $e->getMessage()
+    ]);
+} catch (PDOException $e) {
+    error_log("Erro ao buscar agendamentos: " . $e->getMessage());
+    http_response_code(500);
+    echo json_encode([
+        'status' => 'error',
+        'message' => 'Erro ao buscar agendamentos'
+    ]);
+}
+?>

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corrigir Sessão - CorteFácil</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .warning {
+            background: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+        .user-card {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            background: #f9f9f9;
+        }
+        .user-card h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .user-card p {
+            margin: 5px 0;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Corrigir Sessão - CorteFácil</h1>
+        <p>Esta página ajuda a corrigir problemas de sessão inválida.</p>
+        
+        <div class="warning">
+            <strong>⚠️ Problema Detectado:</strong><br>
+            Sua sessão contém um ID de usuário (13) que não existe no banco de dados.<br>
+            Isso pode acontecer quando um usuário é deletado mas a sessão permanece ativa.
+        </div>
+        
+        <div>
+            <button class="btn btn-danger" onclick="limparSessao()">🗑️ Limpar Sessão</button>
+            <button class="btn" onclick="verificarSessao()">🔍 Verificar Sessão Atual</button>
+            <button class="btn" onclick="listarUsuarios()">👥 Listar Usuários Válidos</button>
+            <button class="btn" onclick="testarProfile()">📋 Testar get_profile.php</button>
+        </div>
+        
+        <div id="resultado" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="container">
+        <h2>🔑 Login com Usuário Válido</h2>
+        <p>Escolha um dos usuários abaixo para fazer login:</p>
+        
+        <div class="user-card">
+            <h4>👤 Cliente Teste</h4>
+            <p><strong>Email:</strong> cliente@teste.com</p>
+            <p><strong>Senha:</strong> password</p>
+            <p><strong>Tipo:</strong> Cliente</p>
+            <button class="btn btn-success" onclick="loginUsuario('cliente@teste.com', 'password')">
+                🚀 Login como Cliente
+            </button>
+        </div>
+
+        <div class="user-card">
+            <h4>🏢 Salão Exemplo</h4>
+            <p><strong>Email:</strong> salao@exemplo.com</p>
+            <p><strong>Senha:</strong> password</p>
+            <p><strong>Tipo:</strong> Salão</p>
+            <button class="btn btn-success" onclick="loginUsuario('salao@exemplo.com', 'password')">
+                🚀 Login como Salão
+            </button>
+        </div>
+
+        <div class="user-card">
+            <h4>⚙️ Administrador</h4>
+            <p><strong>Email:</strong> admin</p>
+            <p><strong>Senha:</strong> password</p>
+            <p><strong>Tipo:</strong> Admin</p>
+            <button class="btn btn-success" onclick="loginUsuario('admin', 'password')">
+                🚀 Login como Admin
+            </button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🧪 Teste Completo</h2>
+        <button class="btn btn-success" onclick="testeCompleto()">
+            🎯 Executar Correção Completa
+        </button>
+        <p><small>Este botão irá: limpar a sessão → fazer login como cliente → testar o profile</small></p>
+    </div>
+
+    <script>
+        function mostrarResultado(texto, tipo = 'info') {
+            const resultado = document.getElementById('resultado');
+            resultado.style.display = 'block';
+            resultado.className = `result ${tipo}`;
+            resultado.textContent = texto;
+        }
+
+        async function limparSessao() {
+            try {
+                mostrarResultado('Limpando sessão...', 'info');
+                
+                // Fazer uma requisição que force a limpeza da sessão
+                const response = await fetch('php/get_profile.php');
+                const data = await response.json();
+                
+                mostrarResultado(`✅ Sessão limpa!\nResposta: ${JSON.stringify(data, null, 2)}`, 'success');
+            } catch (error) {
+                mostrarResultado(`❌ Erro ao limpar sessão: ${error.message}`, 'error');
+            }
+        }
+
+        async function verificarSessao() {
+            try {
+                mostrarResultado('Verificando sessão atual...', 'info');
+                
+                const response = await fetch('php/debug_session.php');
+                const data = await response.text();
+                
+                mostrarResultado(`Informações da sessão:\n${data}`, 'info');
+            } catch (error) {
+                mostrarResultado(`❌ Erro ao verificar sessão: ${error.message}`, 'error');
+            }
+        }
+
+        async function listarUsuarios() {
+            try {
+                mostrarResultado('Listando usuários válidos...', 'info');
+                
+                const response = await fetch('php/debug_profile.php');
+                const data = await response.text();
+                
+                mostrarResultado(`Usuários no banco:\n${data}`, 'info');
+            } catch (error) {
+                mostrarResultado(`❌ Erro ao listar usuários: ${error.message}`, 'error');
+            }
+        }
+
+        async function testarProfile() {
+            try {
+                mostrarResultado('Testando get_profile.php...', 'info');
+                
+                const response = await fetch('php/get_profile.php');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    mostrarResultado(`✅ Profile funcionando!\nDados: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    mostrarResultado(`⚠️ Resposta do profile:\n${JSON.stringify(data, null, 2)}`, 'warning');
+                }
+            } catch (error) {
+                mostrarResultado(`❌ Erro ao testar profile: ${error.message}`, 'error');
+            }
+        }
+
+        async function loginUsuario(email, senha) {
+            try {
+                mostrarResultado(`Fazendo login com ${email}...`, 'info');
+                
+                const response = await fetch('php/login.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `email=${encodeURIComponent(email)}&senha=${encodeURIComponent(senha)}`
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    mostrarResultado(`✅ Login realizado com sucesso!\nDados: ${JSON.stringify(data, null, 2)}`, 'success');
+                    
+                    // Testar o profile automaticamente após login
+                    setTimeout(testarProfile, 1000);
+                } else {
+                    mostrarResultado(`❌ Erro no login:\n${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                mostrarResultado(`❌ Erro no login: ${error.message}`, 'error');
+            }
+        }
+
+        async function testeCompleto() {
+            mostrarResultado('🎯 Iniciando correção completa...', 'info');
+            
+            try {
+                // 1. Limpar sessão
+                await limparSessao();
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // 2. Fazer login como cliente
+                await loginUsuario('cliente@teste.com', 'password');
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // 3. Verificar se tudo está funcionando
+                await testarProfile();
+                
+                mostrarResultado('🎉 Correção completa finalizada!', 'success');
+            } catch (error) {
+                mostrarResultado(`❌ Erro na correção completa: ${error.message}`, 'error');
+            }
+        }
+
+        // Executar verificação inicial ao carregar a página
+        window.onload = function() {
+            verificarSessao();
+        };
+    </script>
+</body>
+</html>

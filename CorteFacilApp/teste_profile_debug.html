@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Profile - CorteFácil</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover { background: #0056b3; }
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #1e7e34; }
+        .btn-danger { background: #dc3545; }
+        .btn-danger:hover { background: #c82333; }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .status.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .status.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .status.info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Diagnóstico do get_profile.php</h1>
+    
+    <div class="container">
+        <h3>1. Verificar Status da Sessão</h3>
+        <button class="btn" onclick="verificarSessao()">Verificar Sessão</button>
+        <div id="sessaoResult" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="container">
+        <h3>2. Debug Completo</h3>
+        <button class="btn btn-success" onclick="debugCompleto()">Debug Completo</button>
+        <div id="debugResult" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="container">
+        <h3>3. Testar get_profile.php</h3>
+        <button class="btn" onclick="testarProfile()">Testar get_profile.php</button>
+        <div id="profileResult" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="container">
+        <h3>4. Login Rápido (para teste)</h3>
+        <div class="form-group">
+            <label>CPF:</label>
+            <input type="text" id="cpf" value="12345678901" placeholder="Digite o CPF">
+        </div>
+        <div class="form-group">
+            <label>Senha:</label>
+            <input type="password" id="senha" value="123456" placeholder="Digite a senha">
+        </div>
+        <button class="btn btn-success" onclick="fazerLogin()">Fazer Login</button>
+        <div id="loginResult" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="container">
+        <h3>5. Cadastrar Usuário de Teste</h3>
+        <button class="btn btn-danger" onclick="cadastrarTeste()">Criar Usuário de Teste</button>
+        <div id="cadastroResult" class="result" style="display:none;"></div>
+    </div>
+
+    <script>
+        async function verificarSessao() {
+            try {
+                const response = await fetch('php/verificar_sessao.php');
+                const data = await response.text();
+                document.getElementById('sessaoResult').style.display = 'block';
+                document.getElementById('sessaoResult').textContent = data;
+            } catch (error) {
+                document.getElementById('sessaoResult').style.display = 'block';
+                document.getElementById('sessaoResult').textContent = 'Erro: ' + error.message;
+            }
+        }
+
+        async function debugCompleto() {
+            try {
+                const response = await fetch('php/debug_profile.php');
+                const data = await response.text();
+                document.getElementById('debugResult').style.display = 'block';
+                document.getElementById('debugResult').textContent = data;
+            } catch (error) {
+                document.getElementById('debugResult').style.display = 'block';
+                document.getElementById('debugResult').textContent = 'Erro: ' + error.message;
+            }
+        }
+
+        async function testarProfile() {
+            try {
+                const response = await fetch('php/get_profile.php');
+                const data = await response.text();
+                document.getElementById('profileResult').style.display = 'block';
+                document.getElementById('profileResult').textContent = data;
+            } catch (error) {
+                document.getElementById('profileResult').style.display = 'block';
+                document.getElementById('profileResult').textContent = 'Erro: ' + error.message;
+            }
+        }
+
+        async function fazerLogin() {
+            const cpf = document.getElementById('cpf').value;
+            const senha = document.getElementById('senha').value;
+
+            try {
+                const response = await fetch('php/login.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ cpf, senha })
+                });
+                
+                const data = await response.text();
+                document.getElementById('loginResult').style.display = 'block';
+                document.getElementById('loginResult').textContent = data;
+                
+                // Se login foi bem-sucedido, testar profile automaticamente
+                if (data.includes('success') || data.includes('sucesso')) {
+                    setTimeout(() => {
+                        testarProfile();
+                    }, 1000);
+                }
+            } catch (error) {
+                document.getElementById('loginResult').style.display = 'block';
+                document.getElementById('loginResult').textContent = 'Erro: ' + error.message;
+            }
+        }
+
+        async function cadastrarTeste() {
+            const dadosTeste = {
+                nome: 'Usuário Teste',
+                email: 'teste@cortefacil.com',
+                cpf: '12345678901',
+                senha: '123456',
+                data_nascimento: '1990-01-01',
+                tipo: 'cliente'
+            };
+
+            try {
+                const response = await fetch('php/cadastro.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(dadosTeste)
+                });
+                
+                const data = await response.text();
+                document.getElementById('cadastroResult').style.display = 'block';
+                document.getElementById('cadastroResult').textContent = data;
+            } catch (error) {
+                document.getElementById('cadastroResult').style.display = 'block';
+                document.getElementById('cadastroResult').textContent = 'Erro: ' + error.message;
+            }
+        }
+
+        // Verificar sessão automaticamente ao carregar a página
+        window.onload = function() {
+            verificarSessao();
+        };
+    </script>
+</body>
+</html>

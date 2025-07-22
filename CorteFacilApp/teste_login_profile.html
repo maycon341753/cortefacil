@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Teste de Login e get_profile.php</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 15px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        input { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 3px; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🔧 Teste de Login e get_profile.php</h2>
+        
+        <div class="section info">
+            <h3>1. Status da Sessão Atual</h3>
+            <div id="statusSessao">Verificando...</div>
+            <button onclick="verificarSessao()">Atualizar Status</button>
+        </div>
+        
+        <div class="section">
+            <h3>2. Fazer Login</h3>
+            <div>
+                <input type="text" id="cpf" placeholder="CPF" value="">
+                <input type="password" id="senha" placeholder="Senha" value="">
+                <button onclick="fazerLogin()">Login</button>
+            </div>
+            <div id="resultadoLogin"></div>
+        </div>
+        
+        <div class="section">
+            <h3>3. Testar get_profile.php</h3>
+            <button onclick="testarGetProfile()">Testar get_profile.php</button>
+            <div id="resultadoProfile"></div>
+        </div>
+        
+        <div class="section">
+            <h3>4. Usuários Disponíveis</h3>
+            <button onclick="listarUsuarios()">Listar Usuários</button>
+            <div id="listaUsuarios"></div>
+        </div>
+        
+        <div class="section">
+            <h3>5. Cadastrar Usuário de Teste</h3>
+            <button onclick="cadastrarUsuarioTeste()">Criar Usuário de Teste</button>
+            <div id="resultadoCadastro"></div>
+        </div>
+    </div>
+
+    <script>
+        function verificarSessao() {
+            fetch('php/debug_get_profile.php')
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('statusSessao').innerHTML = html;
+                })
+                .catch(error => {
+                    document.getElementById('statusSessao').innerHTML = '<div class="error">Erro: ' + error + '</div>';
+                });
+        }
+        
+        function fazerLogin() {
+            const cpf = document.getElementById('cpf').value;
+            const senha = document.getElementById('senha').value;
+            
+            if (!cpf || !senha) {
+                document.getElementById('resultadoLogin').innerHTML = '<div class="error">Digite CPF e senha</div>';
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('cpf', cpf);
+            formData.append('senha', senha);
+            
+            fetch('php/login.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    document.getElementById('resultadoLogin').innerHTML = 
+                        '<div class="success"><strong>✅ Login realizado com sucesso!</strong><br>' +
+                        'Tipo: ' + data.tipo + '</div>';
+                    // Atualizar status da sessão
+                    setTimeout(verificarSessao, 500);
+                } else {
+                    document.getElementById('resultadoLogin').innerHTML = 
+                        '<div class="error"><strong>❌ Erro no login:</strong><br>' + data.mensagem + '</div>';
+                }
+            })
+            .catch(error => {
+                document.getElementById('resultadoLogin').innerHTML = 
+                    '<div class="error"><strong>❌ Erro:</strong><br>' + error + '</div>';
+            });
+        }
+        
+        function testarGetProfile() {
+            fetch('php/get_profile.php')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        document.getElementById('resultadoProfile').innerHTML = 
+                            '<div class="success"><strong>✅ get_profile.php funcionando!</strong><br>' +
+                            '<pre>' + JSON.stringify(data, null, 2) + '</pre></div>';
+                    } else {
+                        document.getElementById('resultadoProfile').innerHTML = 
+                            '<div class="error"><strong>❌ Erro no get_profile.php:</strong><br>' + 
+                            (data.error || 'Erro desconhecido') + '</div>';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('resultadoProfile').innerHTML = 
+                        '<div class="error"><strong>❌ Erro:</strong><br>' + error + '</div>';
+                });
+        }
+        
+        function listarUsuarios() {
+            fetch('php/debug_login.php')
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('listaUsuarios').innerHTML = html;
+                })
+                .catch(error => {
+                    document.getElementById('listaUsuarios').innerHTML = '<div class="error">Erro: ' + error + '</div>';
+                });
+        }
+        
+        function cadastrarUsuarioTeste() {
+            const dados = {
+                nome: 'Usuário Teste',
+                email: 'teste@teste.com',
+                senha: '123456',
+                cpf: '12345678901',
+                data_nascimento: '1990-01-01'
+            };
+            
+            fetch('php/cadastro.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams(dados).toString()
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    document.getElementById('resultadoCadastro').innerHTML = 
+                        '<div class="success"><strong>✅ Usuário criado com sucesso!</strong><br>' +
+                        'CPF: 12345678901<br>Senha: 123456</div>';
+                    document.getElementById('cpf').value = '12345678901';
+                    document.getElementById('senha').value = '123456';
+                } else {
+                    document.getElementById('resultadoCadastro').innerHTML = 
+                        '<div class="error"><strong>❌ Erro no cadastro:</strong><br>' + data.mensagem + '</div>';
+                }
+            })
+            .catch(error => {
+                document.getElementById('resultadoCadastro').innerHTML = 
+                    '<div class="error"><strong>❌ Erro:</strong><br>' + error + '</div>';
+            });
+        }
+        
+        // Verificar sessão ao carregar a página
+        window.onload = function() {
+            verificarSessao();
+        };
+    </script>
+</body>
+</html>

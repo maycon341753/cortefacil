@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste - Criar Agendamentos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste - Criar Agendamentos</h1>
+        <p>Esta página testa a criação e estrutura da tabela de agendamentos</p>
+        
+        <div>
+            <button class="btn" onclick="testarCriacaoAgendamentos()">1. Testar Criação de Agendamentos</button>
+            <button class="btn" onclick="verificarAgendamentos()">2. Verificar Agendamentos</button>
+            <button class="btn btn-success" onclick="testarCompleto()">🚀 Teste Completo</button>
+        </div>
+        
+        <div id="resultado" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        function mostrarResultado(texto, tipo = 'info') {
+            const resultado = document.getElementById('resultado');
+            resultado.style.display = 'block';
+            resultado.className = `result ${tipo}`;
+            resultado.textContent = texto;
+        }
+
+        async function testarCriacaoAgendamentos() {
+            try {
+                mostrarResultado('Testando criação de agendamentos...', 'info');
+                
+                const response = await fetch('php/teste_criar_agendamentos.php');
+                const data = await response.json();
+                
+                mostrarResultado(`Resultado do teste de criação:\n${JSON.stringify(data, null, 2)}`, 
+                    data.status === 'success' ? 'success' : 'error');
+            } catch (error) {
+                mostrarResultado(`❌ Erro ao testar: ${error.message}`, 'error');
+            }
+        }
+
+        async function verificarAgendamentos() {
+            try {
+                mostrarResultado('Verificando agendamentos existentes...', 'info');
+                
+                const response = await fetch('php/debug_agendamentos_estrutura.php');
+                const data = await response.json();
+                
+                mostrarResultado(`Estrutura e dados dos agendamentos:\n${JSON.stringify(data, null, 2)}`, 'info');
+            } catch (error) {
+                mostrarResultado(`❌ Erro ao verificar: ${error.message}`, 'error');
+            }
+        }
+
+        async function testarCompleto() {
+            mostrarResultado('Iniciando teste completo...', 'info');
+            
+            // 1. Testar criação
+            await testarCriacaoAgendamentos();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // 2. Verificar agendamentos
+            await verificarAgendamentos();
+        }
+    </script>
+</body>
+</html>

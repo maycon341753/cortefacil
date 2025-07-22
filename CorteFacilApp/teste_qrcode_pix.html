@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste - QR Code PIX</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .warning {
+            background: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+        .qr-container {
+            text-align: center;
+            padding: 20px;
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group select, .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .step {
+            background: #e9ecef;
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #007bff;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Teste - QR Code PIX</h1>
+        <p>Esta página testa a geração de QR Code para pagamento PIX após a correção da coluna <code>payment_id</code>.</p>
+        
+        <div class="step">
+            <strong>Passo 1:</strong> Verificar se a coluna <code>payment_id</code> foi adicionada
+        </div>
+        
+        <div>
+            <button class="btn btn-warning" onclick="verificarPaymentId()">🔍 Verificar Coluna payment_id</button>
+            <button class="btn" onclick="loginCliente()">🔑 Login como Cliente</button>
+            <button class="btn" onclick="listarSaloes()">🏢 Listar Salões</button>
+            <button class="btn btn-success" onclick="testeCompleto()">🚀 Teste Completo</button>
+        </div>
+        
+        <div id="resultado" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="container">
+        <h2>📋 Simular Agendamento e Pagamento</h2>
+        
+        <div class="step">
+            <strong>Passo 2:</strong> Criar um agendamento de teste
+        </div>
+        
+        <form id="agendamentoForm">
+            <div class="form-group">
+                <label for="salao_id">Salão:</label>
+                <select id="salao_id" name="salao_id">
+                    <option value="">Carregando salões...</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="profissional_id">Profissional:</label>
+                <select id="profissional_id" name="profissional_id">
+                    <option value="">Selecione um salão primeiro</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="servico_id">Serviço:</label>
+                <select id="servico_id" name="servico_id">
+                    <option value="">Selecione um salão primeiro</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="data">Data:</label>
+                <input type="date" id="data" name="data" min="">
+            </div>
+            
+            <div class="form-group">
+                <label for="hora">Hora:</label>
+                <select id="hora" name="hora">
+                    <option value="09:00">09:00</option>
+                    <option value="10:00">10:00</option>
+                    <option value="11:00">11:00</option>
+                    <option value="14:00">14:00</option>
+                    <option value="15:00">15:00</option>
+                    <option value="16:00">16:00</option>
+                </select>
+            </div>
+            
+            <button type="button" class="btn btn-success" onclick="criarAgendamento()">
+                📅 Criar Agendamento
+            </button>
+        </form>
+    </div>
+
+    <div class="container">
+        <h2>💳 Gerar QR Code PIX</h2>
+        
+        <div class="step">
+            <strong>Passo 3:</strong> Gerar QR Code para pagamento
+        </div>
+        
+        <div>
+            <input type="hidden" id="agendamento_id" value="">
+            <button class="btn btn-success" onclick="gerarQRCode()" id="btnQRCode" disabled>
+                🎯 Gerar QR Code PIX
+            </button>
+        </div>
+        
+        <div id="qr-result" class="qr-container" style="display: none;">
+            <h3>QR Code Gerado:</h3>
+            <div id="qr-code"></div>
+            <p id="qr-info"></p>
+        </div>
+    </div>
+
+    <script>
+        function mostrarResultado(texto, tipo = 'info') {
+            const resultado = document.getElementById('resultado');
+            resultado.style.display = 'block';
+            resultado.className = `result ${tipo}`;
+            resultado.textContent = texto;
+        }
+
+        async function verificarPaymentId() {
+            try {
+                mostrarResultado('Verificando coluna payment_id...', 'info');
+                
+                const response = await fetch('php/verificar_payment_id.php');
+                const data = await response.text();
+                
+                mostrarResultado(`Resultado da verificação:\n${data}`, 'info');
+            } catch (error) {
+                mostrarResultado(`❌ Erro ao verificar: ${error.message}`, 'error');
+            }
+        }
+
+        async function loginCliente() {
+            try {
+                mostrarResultado('Fazendo login como cliente...', 'info');
+                
+                const response = await fetch('php/login.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'email=cliente@teste.com&senha=password'
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    mostrarResultado('✅ Login realizado com sucesso!', 'success');
+                    await carregarSaloes();
+                } else {
+                    mostrarResultado(`❌ Erro no login: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                mostrarResultado(`❌ Erro no login: ${error.message}`, 'error');
+            }
+        }
+
+        async function listarSaloes() {
+            await carregarSaloes();
+        }
+
+        async function carregarSaloes() {
+            try {
+                const response = await fetch('php/listar_saloes.php');
+                const data = await response.json();
+                
+                const select = document.getElementById('salao_id');
+                select.innerHTML = '<option value="">Selecione um salão</option>';
+                
+                if (data.status === 'success') {
+                    data.saloes.forEach(salao => {
+                        const option = document.createElement('option');
+                        option.value = salao.id;
+                        option.textContent = salao.nome_fantasia;
+                        select.appendChild(option);
+                    });
+                    mostrarResultado(`✅ ${data.saloes.length} salões carregados!`, 'success');
+                }
+            } catch (error) {
+                mostrarResultado(`❌ Erro ao carregar salões: ${error.message}`, 'error');
+            }
+        }
+
+        async function carregarProfissionais(salaoId) {
+            try {
+                const response = await fetch(`php/listar_profissionais.php?salao_id=${salaoId}`);
+                const data = await response.json();
+                
+                const select = document.getElementById('profissional_id');
+                select.innerHTML = '<option value="">Selecione um profissional</option>';
+                
+                if (data.status === 'success') {
+                    data.profissionais.forEach(prof => {
+                        const option = document.createElement('option');
+                        option.value = prof.id;
+                        option.textContent = prof.nome;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Erro ao carregar profissionais:', error);
+            }
+        }
+
+        async function carregarServicos(salaoId) {
+            try {
+                const response = await fetch(`php/listar_servicos.php?salao_id=${salaoId}`);
+                const data = await response.json();
+                
+                const select = document.getElementById('servico_id');
+                select.innerHTML = '<option value="">Selecione um serviço</option>';
+                
+                if (data.status === 'success') {
+                    data.servicos.forEach(servico => {
+                        const option = document.createElement('option');
+                        option.value = servico.id;
+                        option.textContent = `${servico.nome} - R$ ${parseFloat(servico.preco).toFixed(2)}`;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Erro ao carregar serviços:', error);
+            }
+        }
+
+        async function criarAgendamento() {
+            try {
+                const formData = new FormData(document.getElementById('agendamentoForm'));
+                
+                mostrarResultado('Criando agendamento...', 'info');
+                
+                const response = await fetch('php/agendar.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    document.getElementById('agendamento_id').value = data.data.agendamento_id;
+                    document.getElementById('btnQRCode').disabled = false;
+                    mostrarResultado(`✅ Agendamento criado! ID: ${data.data.agendamento_id}`, 'success');
+                } else {
+                    mostrarResultado(`❌ Erro ao criar agendamento: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                mostrarResultado(`❌ Erro ao criar agendamento: ${error.message}`, 'error');
+            }
+        }
+
+        async function gerarQRCode() {
+            try {
+                const agendamentoId = document.getElementById('agendamento_id').value;
+                
+                if (!agendamentoId) {
+                    mostrarResultado('❌ Crie um agendamento primeiro!', 'error');
+                    return;
+                }
+                
+                mostrarResultado('Gerando QR Code PIX...', 'info');
+                
+                const response = await fetch('php/criar_pagamento_pix.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `agendamento_id=${agendamentoId}`
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    mostrarResultado('✅ QR Code gerado com sucesso!', 'success');
+                    
+                    // Mostrar QR Code
+                    const qrResult = document.getElementById('qr-result');
+                    const qrCode = document.getElementById('qr-code');
+                    const qrInfo = document.getElementById('qr-info');
+                    
+                    qrCode.innerHTML = `<img src="data:image/png;base64,${data.qr_code_base64}" alt="QR Code PIX">`;
+                    qrInfo.innerHTML = `
+                        <strong>Valor:</strong> R$ ${data.valor}<br>
+                        <strong>Payment ID:</strong> ${data.payment_id}
+                    `;
+                    qrResult.style.display = 'block';
+                } else {
+                    mostrarResultado(`❌ Erro ao gerar QR Code: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                mostrarResultado(`❌ Erro ao gerar QR Code: ${error.message}`, 'error');
+            }
+        }
+
+        async function testeCompleto() {
+            mostrarResultado('🚀 Iniciando teste completo...', 'info');
+            
+            try {
+                // 1. Verificar payment_id
+                await verificarPaymentId();
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // 2. Login
+                await loginCliente();
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // 3. Carregar dados
+                await carregarSaloes();
+                
+                mostrarResultado('✅ Teste completo finalizado! Agora você pode criar um agendamento e gerar o QR Code.', 'success');
+            } catch (error) {
+                mostrarResultado(`❌ Erro no teste completo: ${error.message}`, 'error');
+            }
+        }
+
+        // Event listeners
+        document.getElementById('salao_id').addEventListener('change', function() {
+            const salaoId = this.value;
+            if (salaoId) {
+                carregarProfissionais(salaoId);
+                carregarServicos(salaoId);
+            }
+        });
+
+        // Definir data mínima como hoje
+        document.getElementById('data').min = new Date().toISOString().split('T')[0];
+
+        // Carregar dados iniciais
+        window.onload = function() {
+            verificarPaymentId();
+        };
+    </script>
+</body>
+</html>
