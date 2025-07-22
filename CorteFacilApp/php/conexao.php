@@ -4,16 +4,25 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+// Configurações de conexão
+define('DB_HOST', '31.97.18.57');
+define('DB_PORT', '3308');
+define('DB_NAME', 'cortefacil');
+define('DB_USER', 'mysql');
+define('DB_PASS', 'Brava1997');
+
 // Função para verificar se o serviço MySQL está rodando
-function isMySQLRunning() {
+function isMySQLRunning($host = DB_HOST, $port = DB_PORT) {
     try {
-        $socket = @fsockopen('localhost', 3306);
+        $socket = @fsockopen($host, $port, $errno, $errstr, 5); // timeout de 5 segundos
         if ($socket) {
             fclose($socket);
             return true;
         }
+        error_log("Falha ao conectar socket: errno=$errno, errstr=$errstr");
         return false;
     } catch (Exception $e) {
+        error_log("Erro na verificação do MySQL: " . $e->getMessage());
         return false;
     }
 }
@@ -26,42 +35,44 @@ function getConexao() {
     if ($conn === null) {
         // Verifica se o MySQL está rodando
         if (!isMySQLRunning()) {
-            error_log("MySQL não está rodando");
-            throw new Exception("O servidor MySQL não está rodando. Por favor, verifique se o XAMPP está iniciado corretamente.");
+            error_log("MySQL não está rodando em " . DB_HOST . ":" . DB_PORT);
+            throw new Exception("O servidor MySQL não está acessível. Verifique a conexão com " . DB_HOST . ":" . DB_PORT);
         }
 
-        $host = 'localhost';
-        $db = 'cortefacil';
-        $user = 'root';
-        $pass = '';
-        
         try {
-            // Primeiro tenta conectar apenas ao MySQL
-            $dsn_base = "mysql:host={$host}";
-            error_log("Tentando conectar ao MySQL com DSN base: {$dsn_base}");
-            $conn_base = new PDO($dsn_base, $user, $pass);
-            error_log("Conexão base estabelecida");
-
-            // Verifica se o banco existe
-            $result = $conn_base->query("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '{$db}'");
-            if (!$result->fetch()) {
-                error_log("Banco de dados {$db} não existe");
-                throw new Exception("Banco de dados não encontrado");
-            }
-            error_log("Banco de dados {$db} existe");
-
-            // Agora conecta ao banco específico
-            $dsn = "mysql:host={$host};dbname={$db};charset=utf8mb4";
+            // Conecta diretamente ao banco de dados
+            $dsn = "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=utf8mb4";
             $options = [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES => false,
+                PDO::ATTR_TIMEOUT => 10, // timeout de 10 segundos
+                PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4"
             ];
-            error_log("Tentando conectar ao banco {$db}");
-            $conn = new PDO($dsn, $user, $pass, $options);
+            
+            error_log("Tentando conectar ao banco " . DB_NAME . " em " . DB_HOST . ":" . DB_PORT);
+            $conn = new PDO($dsn, DB_USER, DB_PASS, $options);
             error_log("Conexão PDO estabelecida com sucesso");
+            
+            // Testa a conexão fazendo uma query simples
+            $conn->query("SELECT 1");
+            error_log("Teste de conexão realizado com sucesso");
+            
         } catch (PDOException $e) {
-            throw new Exception("Conexão falhou: " . $e->getMessage());
+            error_log("Erro PDO: " . $e->getMessage());
+            
+            // Mensagens de erro mais específicas
+            if (strpos($e->getMessage(), 'Connection refused') !== false) {
+                throw new Exception("Conexão recusada. Verifique se o servidor MySQL está rodando e acessível.");
+            } elseif (strpos($e->getMessage(), 'timeout') !== false) {
+                throw new Exception("Timeout na conexão. O servidor pode estar sobrecarregado.");
+            } elseif (strpos($e->getMessage(), 'Access denied') !== false) {
+                throw new Exception("Acesso negado. Verifique as credenciais do banco de dados.");
+            } elseif (strpos($e->getMessage(), 'Unknown database') !== false) {
+                throw new Exception("Banco de dados '" . DB_NAME . "' não encontrado.");
+            } else {
+                throw new Exception("Erro de conexão: " . $e->getMessage());
+            }
         }
     }
     
@@ -71,15 +82,30 @@ function getConexao() {
 // Estabelece a conexão
 try {
     $conn = getConexao();
+    error_log("Conexão estabelecida com sucesso no arquivo principal");
 } catch (Exception $e) {
-    error_log("Erro ao estabelecer conexão: " . $e->getMessage());
-    header('Content-Type: application/json');
-    echo json_encode(array(
-        'status' => 'error',
-        'message' => 'Erro de conexão com o banco de dados'
-    ));
+    error_log("ERRO CRÍTICO: " . $e->getMessage());
+    
+    // Em desenvolvimento, mostra o erro detalhado
+    if (ini_get('display_errors')) {
+        echo "<pre>";
+        echo "Erro de Conexão:\n";
+        echo $e->getMessage() . "\n\n";
+        echo "Stack Trace:\n";
+        echo $e->getTraceAsString();
+        echo "</pre>";
+    }
+    
+    // Resposta JSON para AJAX
+    if (!headers_sent()) {
+        header('Content-Type: application/json');
+        http_response_code(500);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Erro de conexão com o banco de dados',
+            'details' => $e->getMessage() // Apenas em desenvolvimento
+        ]);
+    }
     exit;
 }
-
-// Não retorna a conexão diretamente, apenas define a função
 ?>

@@ -21,6 +21,12 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSaloes();
     showSection('saloesSection');
 
+    // Adicionar evento para o botão voltar
+    const voltarParaSaloesBtn = document.getElementById('voltarParaSaloes');
+    if (voltarParaSaloesBtn) {
+        voltarParaSaloesBtn.addEventListener('click', voltarParaSaloes);
+    }
+
     // Logout
     const logoutLink = document.getElementById('logoutLink');
     if (logoutLink) {
@@ -218,27 +224,13 @@ async function selectSalao(salaoId) {
         
         // Esconder todas as seções e mostrar apenas a de serviços
         hideAllSections();
-        const servicosSection1 = document.getElementById('servicosSection');
-        if (servicosSection1 && servicosSection1.style) {
-            servicosSection1.style.display = 'block';
+        const servicosSection = document.getElementById('servicosSection');
+        if (servicosSection && servicosSection.style) {
+            servicosSection.style.display = 'block';
         } else {
             console.error('Seção de serviços não encontrada');
+            return;
         }
-        
-        // Adicionar botão voltar
-        const servicosSection = document.getElementById('servicosSection');
-        const backButton = document.createElement('button');
-        backButton.className = 'btn btn-outline-secondary mb-3';
-        backButton.innerHTML = '<i class="bi bi-arrow-left"></i> Voltar para Salões';
-        backButton.onclick = voltarParaSaloes;
-        
-        // Remover botão anterior se existir
-        const existingButton = servicosSection.querySelector('.btn-outline-secondary');
-        if (existingButton) {
-            servicosSection.removeChild(existingButton);
-        }
-        
-        servicosSection.insertBefore(backButton, servicosSection.firstChild);
         
         await loadServicos(salaoId);
         if (loadingModal) {
