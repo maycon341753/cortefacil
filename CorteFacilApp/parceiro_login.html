@@ -270,7 +270,7 @@
         
         <form id="loginForm">
             <div class="mb-3">
-                <input type="text" class="form-control" id="email" name="email" placeholder="Email" required>
+                <input type="text" class="form-control" id="cpf" name="cpf" placeholder="CPF" maxlength="14" required>
             </div>
             
             <div class="mb-3">
@@ -412,8 +412,55 @@
                 behavior: 'smooth',
                 block: 'center'
             });
-            document.getElementById('email').focus();
+            document.getElementById('cpf').focus();
         }
+
+        // Função para formatação automática do CPF
+        function formatCPF(cpf) {
+            // Remove tudo que não é dígito
+            cpf = cpf.replace(/\D/g, '');
+            
+            // Aplica a formatação conforme o usuário digita
+            if (cpf.length <= 3) {
+                return cpf;
+            } else if (cpf.length <= 6) {
+                return cpf.replace(/(\d{3})(\d{1,3})/, '$1.$2');
+            } else if (cpf.length <= 9) {
+                return cpf.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
+            } else {
+                return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
+            }
+        }
+
+        // Função para remover formatação do CPF (apenas números)
+        function removeCPFFormatting(cpf) {
+            return cpf.replace(/\D/g, '');
+        }
+
+        // Adiciona evento de formatação ao campo CPF
+        document.getElementById('cpf').addEventListener('input', function(e) {
+            const cursorPosition = e.target.selectionStart;
+            const oldValue = e.target.value;
+            const newValue = formatCPF(e.target.value);
+            
+            e.target.value = newValue;
+            
+            // Ajusta a posição do cursor
+            if (newValue.length > oldValue.length) {
+                e.target.setSelectionRange(cursorPosition + 1, cursorPosition + 1);
+            } else {
+                e.target.setSelectionRange(cursorPosition, cursorPosition);
+            }
+        });
+
+        // Permite apenas números no campo CPF
+        document.getElementById('cpf').addEventListener('keypress', function(e) {
+            // Permite apenas números, backspace, delete, tab, escape, enter
+            if (!/[0-9]/.test(e.key) && 
+                !['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                e.preventDefault();
+            }
+        });
 
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -425,8 +472,18 @@
             errorMessage.classList.add('d-none');
             successMessage.style.display = 'none';
             
+            const cpfValue = document.getElementById('cpf').value;
+            const cpfNumbers = removeCPFFormatting(cpfValue);
+            
+            // Validação básica do CPF (11 dígitos)
+            if (cpfNumbers.length !== 11) {
+                errorMessage.textContent = 'CPF deve conter 11 dígitos.';
+                errorMessage.classList.remove('d-none');
+                return;
+            }
+            
             const formData = new FormData();
-            formData.append('email', document.getElementById('email').value);
+            formData.append('cpf', cpfNumbers); // Envia apenas os números
             formData.append('senha', document.getElementById('senha').value);
             
             try {
