@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste API Metas</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { background: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .error { background: #ffebee; color: #c62828; }
+        .success { background: #e8f5e8; color: #2e7d32; }
+    </style>
+</head>
+<body>
+    <h1>Teste da API de Metas - Salão Liz Hadassa</h1>
+    
+    <button onclick="testarAPI()">Testar API de Metas</button>
+    
+    <div id="resultado"></div>
+
+    <script>
+        async function testarAPI() {
+            const resultado = document.getElementById('resultado');
+            resultado.innerHTML = '<div class="result">Testando API...</div>';
+            
+            try {
+                // Primeiro, vamos simular um login do salão
+                const loginResponse = await fetch('../php/simular_login_parceiro.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'salao_id=4' // ID do salão da Liz
+                });
+                
+                const loginData = await loginResponse.text();
+                console.log('Login response:', loginData);
+                
+                // Agora testar a API de metas
+                const response = await fetch('../php/salao_obter_metas.php');
+                const data = await response.json();
+                
+                console.log('API Response:', data);
+                
+                if (data.status === 'ok') {
+                    resultado.innerHTML = `
+                        <div class="result success">
+                            <h3>✅ API funcionando!</h3>
+                            <p><strong>Agendamentos confirmados:</strong> ${data.meta_atual.agendamentos_confirmados}</p>
+                            <p><strong>Dias restantes:</strong> ${data.meta_atual.dias_restantes}</p>
+                            <p><strong>Bônus atual:</strong> R$ ${data.meta_atual.bonus_pago}</p>
+                            <p><strong>Meta 50 atingida:</strong> ${data.meta_atual.meta_50_atingida ? 'SIM' : 'NÃO'}</p>
+                            <p><strong>Meta 100 atingida:</strong> ${data.meta_atual.meta_100_atingida ? 'SIM' : 'NÃO'}</p>
+                            <p><strong>Período:</strong> ${data.meta_atual.data_inicio} a ${data.meta_atual.data_fim}</p>
+                            
+                            <h4>Dados completos:</h4>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultado.innerHTML = `
+                        <div class="result error">
+                            <h3>❌ Erro na API</h3>
+                            <p><strong>Status:</strong> ${data.status}</p>
+                            <p><strong>Mensagem:</strong> ${data.mensagem || 'Erro desconhecido'}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                resultado.innerHTML = `
+                    <div class="result error">
+                        <h3>❌ Erro de conexão</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+                console.error('Erro:', error);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -45,8 +45,8 @@ try {
         $status_detail = $payment['status_detail'] ?? '';
         
         if ($status === 'approved') {
-            // Pagamento aprovado - atualizar agendamento
-            $stmt = $conn->prepare("UPDATE agendamentos SET status = 'confirmado', status_pagamento = 'pago' WHERE id = ?");
+            // Pagamento aprovado - atualizar agendamento para realizado
+            $stmt = $conn->prepare("UPDATE agendamentos SET status = 'realizado', status_pagamento = 'pago' WHERE id = ?");
             $stmt->execute([$agendamento_id]);
             
             echo json_encode([

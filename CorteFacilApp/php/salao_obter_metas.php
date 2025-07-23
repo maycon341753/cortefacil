@@ -1,6 +1,7 @@
 <?php
 session_start();
 include 'conexao.php';
+include 'gerenciar_ciclos_metas.php';
 
 // Verifica se é um salão
 if (!isset($_SESSION['salao_id'])) {
@@ -10,50 +11,56 @@ if (!isset($_SESSION['salao_id'])) {
 
 try {
     $salao_id = $_SESSION['salao_id'];
-    $mes_atual = date('Y-m');
-    $ultimo_dia = date('t');
-    $dias_restantes = $ultimo_dia - date('d');
     
-    // Busca os dados do mês atual
-    $query = "SELECT 
-                COALESCE(COUNT(a.id), 0) as agendamentos_mes,
-                COALESCE(m.bonus_pago, 0) as bonus_pago
-              FROM saloes s
-              LEFT JOIN agendamentos a ON s.id = a.salao_id 
-                   AND DATE_FORMAT(a.data, '%Y-%m') = ?
-                   AND a.status = 'realizado'
-              LEFT JOIN metas m ON s.id = m.salao_id 
-                   AND m.mes = ?
-              WHERE s.id = ?
-              GROUP BY s.id";
-              
-    $stmt = $conn->prepare($query);
-    $stmt->execute([$mes_atual, $mes_atual, $salao_id]);
-    $meta_atual = $stmt->fetch(PDO::FETCH_ASSOC);
+    // Finaliza ciclos expirados e cria novos se necessário
+    finalizarCiclosExpirados();
     
-    // Adiciona os dias restantes
-    $meta_atual['dias_restantes'] = $dias_restantes;
+    // Atualiza a contagem de agendamentos confirmados para o ciclo atual
+    $ciclo_atual = atualizarContagemAgendamentos($salao_id);
     
-    // Busca o histórico dos últimos 6 meses
-    $query = "SELECT 
-                DATE_FORMAT(STR_TO_DATE(m.mes, '%Y-%m'), '%m/%Y') as mes_formatado,
-                m.mes,
-                m.cortes_mes as agendamentos,
-                m.bonus_pago
-              FROM metas m
-              WHERE m.salao_id = ?
-                AND m.mes < ?
-              ORDER BY m.mes DESC
-              LIMIT 6";
-              
-    $stmt = $conn->prepare($query);
-    $stmt->execute([$salao_id, $mes_atual]);
-    $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    if (!$ciclo_atual) {
+        throw new Exception('Erro ao obter dados do ciclo atual');
+    }
+    
+    // Calcula o bônus atual baseado nas metas atingidas
+    $bonus_atual = 0;
+    if ($ciclo_atual['meta_100_atingida']) {
+        $bonus_atual = 150.00;
+    } elseif ($ciclo_atual['meta_50_atingida']) {
+        $bonus_atual = 50.00;
+    }
+    
+    // Prepara os dados da meta atual
+    $meta_atual = [
+        'agendamentos_confirmados' => $ciclo_atual['agendamentos_confirmados'],
+        'agendamentos_mes' => $ciclo_atual['agendamentos_confirmados'], // Compatibilidade
+        'bonus_pago' => number_format($bonus_atual, 2, ',', '.'),
+        'dias_restantes' => (int)$ciclo_atual['dias_restantes'],
+        'data_inicio' => $ciclo_atual['data_inicio'],
+        'data_fim' => $ciclo_atual['data_fim'],
+        'meta_50_atingida' => $ciclo_atual['meta_50_atingida'],
+        'meta_100_atingida' => $ciclo_atual['meta_100_atingida']
+    ];
+    
+    // Busca o histórico dos últimos 6 ciclos
+    $historico_ciclos = obterHistoricoCiclos($salao_id, 6);
     
     $historico = [];
-    foreach ($result as $row) {
-        $row['bonus_pago'] = number_format($row['bonus_pago'], 2, ',', '.');
-        $historico[] = $row;
+    foreach ($historico_ciclos as $ciclo) {
+        $bonus_ciclo = 0;
+        if ($ciclo['meta_100_atingida']) {
+            $bonus_ciclo = 150.00;
+        } elseif ($ciclo['meta_50_atingida']) {
+            $bonus_ciclo = 50.00;
+        }
+        
+        $historico[] = [
+            'mes_formatado' => $ciclo['periodo_formatado'],
+            'agendamentos' => $ciclo['agendamentos_confirmados'],
+            'bonus_pago' => number_format($bonus_ciclo, 2, ',', '.'),
+            'meta_50_atingida' => $ciclo['meta_50_atingida'],
+            'meta_100_atingida' => $ciclo['meta_100_atingida']
+        ];
     }
     
     echo json_encode([

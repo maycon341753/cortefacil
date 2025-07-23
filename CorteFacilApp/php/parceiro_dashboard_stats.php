@@ -27,7 +27,7 @@ try {
     $stmt->execute(['salao_id' => $salao_id, 'hoje' => $hoje]);
     $agendamentos_hoje = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
-    // Faturamento de hoje
+    // Faturamento de hoje - sempre usar o preço real do serviço
     $stmt = $conn->prepare("
         SELECT COALESCE(SUM(s.preco), 0) as total
         FROM agendamentos a
@@ -113,7 +113,7 @@ try {
         unset($agendamento['hora']);
     }
 
-    // Faturamento semanal
+    // Faturamento semanal - sempre usar preços reais dos serviços
     $faturamento_semanal = [];
     for ($i = 6; $i >= 0; $i--) {
         $data = date('Y-m-d', strtotime("-$i days"));

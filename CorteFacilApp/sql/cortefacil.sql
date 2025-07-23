@@ -102,6 +102,26 @@ CREATE TABLE IF NOT EXISTS metas (
     UNIQUE KEY unique_meta (salao_id, mes)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- Tabela de ciclos de metas (novo sistema de 30 dias)
+CREATE TABLE IF NOT EXISTS ciclos_metas (
+    id INT(11) NOT NULL AUTO_INCREMENT,
+    salao_id INT(11) NOT NULL,
+    data_inicio DATE NOT NULL,
+    data_fim DATE NOT NULL,
+    agendamentos_confirmados INT(11) DEFAULT 0,
+    meta_50_atingida BOOLEAN DEFAULT FALSE,
+    meta_100_atingida BOOLEAN DEFAULT FALSE,
+    bonus_50_pago BOOLEAN DEFAULT FALSE,
+    bonus_100_pago BOOLEAN DEFAULT FALSE,
+    finalizado BOOLEAN DEFAULT FALSE,
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    FOREIGN KEY (salao_id) REFERENCES saloes(id) ON DELETE CASCADE,
+    INDEX idx_salao_data (salao_id, data_inicio, data_fim),
+    INDEX idx_data_fim (data_fim)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 -- Tabela de promoções
 CREATE TABLE IF NOT EXISTS promocoes (
     id INT(11) NOT NULL AUTO_INCREMENT,

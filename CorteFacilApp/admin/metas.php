@@ -155,7 +155,7 @@ include '../php/verificar_admin.php';
             <div class="row mb-4">
                 <div class="col-12">
                     <h1 class="h3">Metas dos Salões</h1>
-                    <p class="text-muted">Acompanhamento de metas e bonificações do mês atual</p>
+                    <p class="text-muted">Acompanhamento de metas e bonificações dos ciclos de 30 dias</p>
                 </div>
             </div>
 
@@ -210,10 +210,10 @@ include '../php/verificar_admin.php';
 
                 data.saloes.forEach(salao => {
                     const progresso = (salao.agendamentos_mes / 100) * 100;
-                    const bonusClass = salao.agendamentos_mes >= 100 ? 'bonus-150' : 
-                                     salao.agendamentos_mes >= 50 ? 'bonus-50' : '';
-                    const bonusText = salao.agendamentos_mes >= 100 ? 'Bônus R$ 150,00' : 
-                                    salao.agendamentos_mes >= 50 ? 'Bônus R$ 50,00' : '';
+                    const bonusClass = salao.meta_100_atingida ? 'bonus-150' : 
+                                     salao.meta_50_atingida ? 'bonus-50' : '';
+                    const bonusText = salao.meta_100_atingida ? 'Bônus R$ 150,00' : 
+                                    salao.meta_50_atingida ? 'Bônus R$ 50,00' : '';
                     
                     container.innerHTML += `
                         <div class="col-md-6 mb-4">
@@ -223,7 +223,11 @@ include '../php/verificar_admin.php';
                                     <h5 class="card-title">${salao.nome_fantasia}</h5>
                                     <p class="mb-2">
                                         <i class="fas fa-calendar-check me-2"></i>
-                                        ${salao.agendamentos_mes} agendamentos este mês
+                                        ${salao.agendamentos_mes} agendamentos confirmados
+                                    </p>
+                                    <p class="mb-2">
+                                        <i class="fas fa-clock me-2"></i>
+                                        ${salao.dias_restantes} dias restantes no ciclo
                                     </p>
                                     <div class="progress">
                                         <div class="progress-bar ${progresso >= 100 ? 'bg-success' : 'bg-primary'}" 
@@ -232,8 +236,8 @@ include '../php/verificar_admin.php';
                                         </div>
                                     </div>
                                     <div class="d-flex justify-content-between mt-3">
-                                        <small class="text-muted">Meta 50: ${salao.agendamentos_mes >= 50 ? '<i class="fas fa-check-circle text-success"></i>' : '<i class="fas fa-times-circle text-danger"></i>'}</small>
-                                        <small class="text-muted">Meta 100: ${salao.agendamentos_mes >= 100 ? '<i class="fas fa-check-circle text-success"></i>' : '<i class="fas fa-times-circle text-danger"></i>'}</small>
+                                        <small class="text-muted">Meta 50: ${salao.meta_50_atingida ? '<i class="fas fa-check-circle text-success"></i>' : '<i class="fas fa-times-circle text-danger"></i>'}</small>
+                                        <small class="text-muted">Meta 100: ${salao.meta_100_atingida ? '<i class="fas fa-check-circle text-success"></i>' : '<i class="fas fa-times-circle text-danger"></i>'}</small>
                                     </div>
                                 </div>
                             </div>

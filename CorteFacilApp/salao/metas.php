@@ -116,7 +116,7 @@
         <div class="row">
             <div class="col-12 mb-4">
                 <h1 class="h3">Minhas Metas</h1>
-                <p class="text-muted">Acompanhe seu progresso e bonificações do mês</p>
+                <p class="text-muted">Acompanhe seu progresso e bonificações do ciclo</p>
             </div>
         </div>
 
@@ -126,7 +126,7 @@
                 <div class="card meta-card">
                     <div class="card-body">
                         <div id="metaBadge"></div>
-                        <h4 class="card-title mb-4">Progresso do Mês</h4>
+                        <h4 class="card-title mb-4">Progresso do Ciclo (30 dias)</h4>
                         
                         <div class="progress">
                             <div class="progress-bar" id="progressoBar" role="progressbar"></div>
@@ -211,33 +211,33 @@
                     const historico = data.historico;
 
                     // Atualiza o progresso
-                    const progresso = (meta.agendamentos_mes / 100) * 100;
+                    const progresso = (meta.agendamentos_confirmados / 100) * 100;
                     document.getElementById('progressoBar').style.width = Math.min(progresso, 100) + '%';
                     document.getElementById('progressoBar').className = 
                         `progress-bar ${progresso >= 100 ? 'bg-success' : 'bg-primary'}`;
 
                     // Atualiza os números
-                    document.getElementById('totalAgendamentos').textContent = meta.agendamentos_mes;
+                    document.getElementById('totalAgendamentos').textContent = meta.agendamentos_confirmados;
                     document.getElementById('diasRestantes').textContent = meta.dias_restantes;
                     document.getElementById('bonusAtual').textContent = 
                         'R$ ' + (meta.bonus_pago || '0,00');
 
                     // Atualiza o badge
                     const metaBadge = document.getElementById('metaBadge');
-                    if (meta.agendamentos_mes >= 100) {
+                    if (meta.meta_100_atingida) {
                         metaBadge.innerHTML = '<span class="meta-badge meta-100">Meta Ouro Alcançada!</span>';
-                    } else if (meta.agendamentos_mes >= 50) {
+                    } else if (meta.meta_50_atingida) {
                         metaBadge.innerHTML = '<span class="meta-badge meta-50">Meta Bronze Alcançada!</span>';
                     }
 
                     // Atualiza status das metas
-                    document.getElementById('meta50Status').innerHTML = meta.agendamentos_mes >= 50 ?
+                    document.getElementById('meta50Status').innerHTML = meta.meta_50_atingida ?
                         '<span class="text-success"><i class="fas fa-check-circle"></i> Alcançada!</span>' :
-                        '<span class="text-muted">Faltam ' + (50 - meta.agendamentos_mes) + ' agendamentos</span>';
+                        '<span class="text-muted">Faltam ' + (50 - meta.agendamentos_confirmados) + ' agendamentos</span>';
 
-                    document.getElementById('meta100Status').innerHTML = meta.agendamentos_mes >= 100 ?
+                    document.getElementById('meta100Status').innerHTML = meta.meta_100_atingida ?
                         '<span class="text-success"><i class="fas fa-check-circle"></i> Alcançada!</span>' :
-                        '<span class="text-muted">Faltam ' + (100 - meta.agendamentos_mes) + ' agendamentos</span>';
+                        '<span class="text-muted">Faltam ' + (100 - meta.agendamentos_confirmados) + ' agendamentos</span>';
 
                     // Atualiza histórico
                     const historicoContainer = document.getElementById('historicoMetas');
@@ -247,19 +247,22 @@
                         historicoContainer.innerHTML = '<p class="text-center text-muted">Nenhum histórico disponível</p>';
                     } else {
                         historico.forEach(item => {
+                            const dataInicio = new Date(item.data_inicio).toLocaleDateString('pt-BR');
+                            const dataFim = new Date(item.data_fim).toLocaleDateString('pt-BR');
+                            
                             historicoContainer.innerHTML += `
                                 <div class="historico-item">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
-                                            <h6 class="mb-1">${item.mes_formatado}</h6>
-                                            <small class="text-muted">${item.agendamentos} agendamentos</small>
+                                            <h6 class="mb-1">Ciclo: ${dataInicio} - ${dataFim}</h6>
+                                            <small class="text-muted">${item.agendamentos_confirmados} agendamentos confirmados</small>
                                         </div>
                                         <div class="text-end">
                                             <h6 class="mb-1">R$ ${item.bonus_pago}</h6>
-                                            <small class="text-${item.agendamentos >= 100 ? 'success' : 
-                                                               item.agendamentos >= 50 ? 'warning' : 'danger'}">
-                                                ${item.agendamentos >= 100 ? 'Meta Ouro' : 
-                                                  item.agendamentos >= 50 ? 'Meta Bronze' : 'Meta não atingida'}
+                                            <small class="text-${item.meta_100_atingida ? 'success' : 
+                                                               item.meta_50_atingida ? 'warning' : 'danger'}">
+                                                ${item.meta_100_atingida ? 'Meta Ouro' : 
+                                                  item.meta_50_atingida ? 'Meta Bronze' : 'Meta não atingida'}
                                             </small>
                                         </div>
                                     </div>

@@ -37,7 +37,7 @@ try {
         throw new Exception('Agendamento não encontrado');
     }
 
-    // Usar valor fixo de R$ 0,99 conforme solicitado
+    // Valor fixo do agendamento (taxa de agendamento)
     $valor = 0.99;
 
     // Criar pagamento no Mercado Pago
@@ -63,9 +63,9 @@ try {
         throw new Exception('Erro ao criar pagamento no Mercado Pago');
     }
 
-    // Salvar payment_id no banco de dados
-    $stmt = $conn->prepare("UPDATE agendamentos SET payment_id = ? WHERE id = ?");
-    $stmt->execute([$payment['id'], $agendamento_id]);
+    // Salvar payment_id e valor_servico no banco de dados
+    $stmt = $conn->prepare("UPDATE agendamentos SET payment_id = ?, valor_servico = ?, taxa_servico = ? WHERE id = ?");
+    $stmt->execute([$payment['id'], $valor, $valor, $agendamento_id]);
 
     // Extrair dados do QR Code
     $qr_code_base64 = $payment['point_of_interaction']['transaction_data']['qr_code_base64'] ?? '';

@@ -56,6 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Configurar eventos dos links da navbar
     const meusAgendamentosLink = document.getElementById('meusAgendamentosLink');
     const novoAgendamentoLink = document.getElementById('novoAgendamentoLink');
+    const logoutLink = document.getElementById('logoutLink');
     
     if (meusAgendamentosLink) {
         meusAgendamentosLink.addEventListener('click', (e) => {
@@ -72,6 +73,14 @@ document.addEventListener('DOMContentLoaded', () => {
         novoAgendamentoLink.addEventListener('click', (e) => {
             e.preventDefault();
             showSection('saloesSection');
+        });
+    }
+
+    // Configurar evento de logout
+    if (logoutLink) {
+        logoutLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            realizarLogout();
         });
     }
 
@@ -1116,4 +1125,30 @@ function updateModalResumo() {
             <small><strong>Observação:</strong> Este valor refere-se apenas à taxa de agendamento. O pagamento do serviço será realizado diretamente no salão.</small>
         </div>
     `;
+}
+
+// Função para realizar logout
+async function realizarLogout() {
+    try {
+        showLoading();
+        
+        const response = await fetch('../php/logout.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            // Redirecionar para a página de login
+            window.location.href = 'login.php';
+        } else {
+            throw new Error(data.mensagem || 'Erro ao realizar logout');
+        }
+    } catch (error) {
+        hideLoading();
+        showError('Erro ao realizar logout: ' + error.message);
+    }
 }

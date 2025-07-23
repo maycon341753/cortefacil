@@ -41,9 +41,14 @@ try {
     $stmt->execute(['salao_id' => $salao_id, 'hoje' => $hoje]);
     $agendamentos_hoje = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
-    // Faturamento de hoje
+    // Faturamento de hoje - usando valor real do serviço
     $stmt = $pdo->prepare("
-        SELECT COALESCE(SUM(s.preco), 0) as total
+        SELECT COALESCE(SUM(
+            CASE 
+                WHEN a.valor_servico IS NOT NULL AND a.valor_servico > 0 THEN a.valor_servico
+                ELSE s.preco
+            END
+        ), 0) as total
         FROM agendamentos a
         JOIN servicos s ON s.id = a.servico_id
         WHERE a.salao_id = :salao_id
