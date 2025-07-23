@@ -21,11 +21,8 @@ include 'conexao.php';
 // Definir cabeçalho JSON
 header('Content-Type: application/json');
 
-// Verifica se é um admin
+// Verifica se é um admin (para fins de teste, vamos permitir acesso)
 if (!isset($_SESSION['admin_id'])) {
-    // Para fins de teste, vamos ignorar a verificação de admin
-    // echo json_encode(['status' => 'erro', 'mensagem' => 'Não autorizado']);
-    // exit;
     $_SESSION['admin_id'] = 1; // Temporário para teste
 }
 
@@ -60,6 +57,8 @@ try {
         $stmt = $conn->query($query);
         $saloes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         error_log("Salões ativos encontrados: " . print_r($saloes, true));
+    } else {
+        error_log("Tabela saloes não existe!");
     }
 
     // Agendamentos hoje (apenas pagos)
@@ -82,6 +81,8 @@ try {
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         $valorHoje = $row['total'] ?? 0;
         $stats['valorAgendamentosHoje'] = 'R$ ' . number_format($valorHoje, 2, ',', '.');
+    } else {
+        error_log("Tabela agendamentos não existe");
     }
 
     // Promoções ativas
@@ -94,8 +95,11 @@ try {
             $stats['promocoesAtivas'] = (int)$row['total'];
         } catch (Exception $e) {
             // A tabela promocoes pode existir mas ter estrutura diferente
+            error_log("Erro ao consultar promoções: " . $e->getMessage());
             $stats['promocoesAtivas'] = 0;
         }
+    } else {
+        error_log("Tabela promocoes não existe");
     }
 
     // Faturamento mensal (apenas agendamentos pagos do mês atual)
@@ -114,13 +118,14 @@ try {
         $stats['faturamentoMensal'] = 'R$ ' . number_format($faturamento, 2, ',', '.');
     }
 
+    error_log("Estatísticas finais: " . json_encode($stats));
     echo json_encode($stats);
 
 } catch (Exception $e) {
     error_log("Erro no dashboard: " . $e->getMessage());
     echo json_encode([
         'status' => 'erro', 
-        'mensagem' => 'Erro ao carregar estatísticas do dashboard',
+        'mensagem' => 'Erro ao carregar estatísticas do dashboard: ' . $e->getMessage(),
         'totalSaloes' => 0,
         'agendamentosHoje' => 0,
         'valorAgendamentosHoje' => 'R$ 0,00',

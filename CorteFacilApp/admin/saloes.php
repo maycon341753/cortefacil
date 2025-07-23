@@ -332,7 +332,7 @@
         // Carrega lista de salões
         function carregarSaloes() {
             $.ajax({
-                url: 'http://localhost/CorteFacil/php/admin_listar_saloes.php',
+                url: '../php/admin_listar_saloes.php',
                 type: 'GET',
                 dataType: 'json',
                 xhrFields: {
@@ -395,24 +395,32 @@
                 ].filter(Boolean)
             };
 
-            const url = formData.id ? 'http://localhost/CorteFacil/php/admin_atualizar_salao.php' : 'http://localhost/CorteFacil/php/admin_cadastrar_salao.php';
+            const url = formData.id ? '../php/admin_atualizar_salao.php' : '../php/admin_cadastrar_salao.php';
+            const isEdicao = !!formData.id;
+            
+            console.log('Salvando salão:', formData);
+            console.log('URL:', url);
+            console.log('É edição:', isEdicao);
 
             $.ajax({
                 url: url,
                 type: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify(formData),
+                dataType: 'json',
                 xhrFields: {
                     withCredentials: true
                 },
                 success: function(response) {
-                    if (response.status === 'ok') {
-                        alert('Salão ' + (formData.id ? 'atualizado' : 'cadastrado') + ' com sucesso!');
+                    console.log('Resposta recebida:', response);
+                    
+                    if (response && response.status === 'ok') {
+                        alert('Salão ' + (isEdicao ? 'atualizado' : 'cadastrado') + ' com sucesso!');
                         $('#modalSalao').modal('hide');
                         carregarSaloes();
                         
                         // Se for cadastro e tiver credenciais, mostra para o usuário em um modal mais amigável
-                        if (!formData.id && response.credenciais) {
+                        if (!isEdicao && response.credenciais) {
                             // Cria um modal para exibir as credenciais de forma mais amigável
                             let credenciaisHtml = `
                                 <div class="alert alert-success mb-3">
@@ -494,52 +502,116 @@
                             });
                         }
                     } else {
-                        alert(response.mensagem || 'Erro ao salvar salão');
+                        console.error('Erro na resposta:', response);
+                        alert(response && response.mensagem ? response.mensagem : 'Erro ao salvar salão');
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.error('Erro:', error);
-                    alert('Erro ao salvar salão');
+                    console.error('Erro na requisição:', error);
+                    console.error('Status:', status);
+                    console.error('Response Text:', xhr.responseText);
+                    
+                    try {
+                        const errorResponse = JSON.parse(xhr.responseText);
+                        alert(errorResponse.mensagem || 'Erro ao salvar salão');
+                    } catch (e) {
+                        alert('Erro ao salvar salão: ' + error);
+                    }
                 }
             });
         }
 
+        // Limpa o formulário do modal
+        function limparFormulario() {
+            $('#salaoId').val('');
+            $('#nomeFantasia').val('');
+            $('#documento').val('');
+            $('#cidade').val('');
+            $('#endereco').val('');
+            $('#whatsapp').val('');
+            $('#numFuncionarios').val('1');
+            $('#mediaDiaria').val('0');
+            $('#mediaSemanal').val('0');
+            $('#pixChave').val('');
+            $('#horarioAbertura').val('09:00');
+            $('#horarioFechamento').val('18:00');
+            $('#intervaloAgendamento').val('30');
+            $('[id^=dia]').prop('checked', false);
+        }
+
         // Edita um salão
         function editarSalao(id) {
+            console.log('Editando salão ID:', id);
+            
+            // Limpa o formulário primeiro
+            limparFormulario();
+            
             $.ajax({
                 url: '../php/admin_obter_salao.php',
                 type: 'GET',
                 data: { id: id },
                 dataType: 'json',
+                xhrFields: {
+                    withCredentials: true
+                },
                 success: function(salao) {
-                    $('#salaoId').val(salao.id);
-                    $('#nomeFantasia').val(salao.nome_fantasia);
-                    $('#documento').val(salao.documento);
-                    $('#cidade').val(salao.cidade);
-                    $('#endereco').val(salao.endereco);
-                    $('#whatsapp').val(salao.whatsapp);
-                    $('#numFuncionarios').val(salao.num_funcionarios);
-                    $('#mediaDiaria').val(salao.media_diaria);
-                    $('#mediaSemanal').val(salao.media_semanal);
-                    $('#pixChave').val(salao.pix_chave);
-                    $('#horarioAbertura').val(salao.horario_abertura);
-                    $('#horarioFechamento').val(salao.horario_fechamento);
-                    $('#intervaloAgendamento').val(salao.intervalo_agendamento);
+                    console.log('Dados do salão recebidos:', salao);
+                    
+                    // Verifica se há erro na resposta
+                    if (salao.status === 'erro') {
+                        alert(salao.mensagem || 'Erro ao carregar dados do salão');
+                        return;
+                    }
+                    
+                    // Preenche os campos do formulário
+                    $('#salaoId').val(salao.id || '');
+                    $('#nomeFantasia').val(salao.nome_fantasia || '');
+                    $('#documento').val(salao.documento || '');
+                    $('#cidade').val(salao.cidade || '');
+                    $('#endereco').val(salao.endereco || '');
+                    $('#whatsapp').val(salao.whatsapp || '');
+                    $('#numFuncionarios').val(salao.num_funcionarios || '1');
+                    $('#mediaDiaria').val(salao.media_diaria || '0');
+                    $('#mediaSemanal').val(salao.media_semanal || '0');
+                    $('#pixChave').val(salao.pix_chave || '');
+                    $('#horarioAbertura').val(salao.horario_abertura || '09:00');
+                    $('#horarioFechamento').val(salao.horario_fechamento || '18:00');
+                    $('#intervaloAgendamento').val(salao.intervalo_agendamento || '30');
+                    
+                    // Limpa todos os checkboxes primeiro
+                    $('[id^=dia]').prop('checked', false);
                     
                     // Marca os dias de funcionamento
-                    $('#dia0').prop('checked', salao.dias_funcionamento.includes('0'));
-                    $('#dia1').prop('checked', salao.dias_funcionamento.includes('1'));
-                    $('#dia2').prop('checked', salao.dias_funcionamento.includes('2'));
-                    $('#dia3').prop('checked', salao.dias_funcionamento.includes('3'));
-                    $('#dia4').prop('checked', salao.dias_funcionamento.includes('4'));
-                    $('#dia5').prop('checked', salao.dias_funcionamento.includes('5'));
-                    $('#dia6').prop('checked', salao.dias_funcionamento.includes('6'));
-
+                    if (salao.dias_funcionamento) {
+                        let diasArray = [];
+                        
+                        // Se for string, converte para array
+                        if (typeof salao.dias_funcionamento === 'string') {
+                            diasArray = salao.dias_funcionamento.split(',');
+                        } else if (Array.isArray(salao.dias_funcionamento)) {
+                            diasArray = salao.dias_funcionamento;
+                        }
+                        
+                        console.log('Dias de funcionamento:', diasArray);
+                        
+                        diasArray.forEach(dia => {
+                            if (dia !== '') {
+                                $('#dia' + dia.trim()).prop('checked', true);
+                            }
+                        });
+                    }
+                    
+                    // Atualiza o título do modal
+                    $('.modal-title').text('Editar Salão');
+                    
+                    // Exibe o modal
                     $('#modalSalao').modal('show');
                 },
                 error: function(xhr, status, error) {
-                    console.error('Erro:', error);
-                    alert('Erro ao carregar dados do salão');
+                    console.error('Erro ao carregar salão:', error);
+                    console.error('Status:', status);
+                    console.error('Response:', xhr.responseText);
+                    alert('Erro ao carregar dados do salão: ' + error);
                 }
             });
         }
@@ -575,6 +647,21 @@
             
             // Resetar dias de funcionamento
             $('[id^=dia]').prop('checked', false);
+        });
+
+        // Evento para o botão "Novo Salão"
+        $(document).ready(function() {
+            // Quando clicar no botão "Novo Salão"
+            $('[data-bs-target="#modalSalao"]').on('click', function() {
+                // Limpa o formulário
+                limparFormulario();
+                
+                // Define o título como "Cadastrar Salão"
+                $('.modal-title').text('Cadastrar Salão');
+            });
+            
+            // Carrega os salões ao inicializar a página
+            carregarSaloes();
         });
     </script>
 </body>

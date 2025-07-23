@@ -403,7 +403,8 @@
     <script>
         let movimentacoesTable;
         let estatisticasSaloesTable;
-        let faturamentoChart;
+        // Definir faturamentoChart como uma propriedade global do window para evitar problemas de escopo
+        window.faturamentoChart = null;
 
         $(document).ready(function() {
             // Inicializar DataTables
@@ -561,69 +562,144 @@
         }
 
         function carregarGraficoFaturamento() {
+            // Obter o container do gráfico
+            const chartContainer = document.getElementById('faturamentoChart').parentNode;
+            
+            // Adicionar indicador de carregamento
+            chartContainer.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Carregando dados...</p></div>';
+            
+            // Recriar o canvas imediatamente (sem setTimeout)
+            chartContainer.innerHTML = '<canvas id="faturamentoChart" height="100"></canvas>';
+            
+            // Carregar os dados do gráfico
             fetch('../php/admin_grafico_faturamento.php')
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Resposta da rede não foi ok: ' + response.status);
+                    }
+                    return response.json();
+                })
                 .then(data => {
-                    if (data.status !== 'erro' && data.dados) {
+                    if (data.status !== 'erro' && data.dados && data.dados.length > 0) {
                         criarGraficoFaturamento(data.dados);
+                    } else {
+                        // Mostrar mensagem de erro se não houver dados
+                        document.getElementById('faturamentoChart').parentNode.innerHTML = '<div class="alert alert-warning">Não foi possível carregar os dados do gráfico.</div>';
+                        console.warn('Dados do gráfico não disponíveis:', data);
                     }
                 })
                 .catch(error => {
                     console.error('Erro ao carregar dados do gráfico:', error);
+                    // Mostrar mensagem de erro em caso de falha
+                    document.getElementById('faturamentoChart').parentNode.innerHTML = '<div class="alert alert-danger">Erro ao carregar dados do gráfico: ' + error.message + '</div>';
                 });
         }
 
         function criarGraficoFaturamento(dados) {
-            const ctx = document.getElementById('faturamentoChart').getContext('2d');
-            
-            if (faturamentoChart) {
-                faturamentoChart.destroy();
-            }
-            
-            faturamentoChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: dados.map(d => formatarData(d.data)),
-                    datasets: [{
-                        label: 'Faturamento Diário',
-                        data: dados.map(d => parseFloat(d.faturamento)),
-                        borderColor: '#667eea',
-                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return 'R$ ' + value.toFixed(2);
+            try {
+                // Verificar se há dados válidos primeiro
+                if (!dados || !Array.isArray(dados) || dados.length === 0) {
+                    console.error('Dados inválidos para o gráfico');
+                    const container = document.getElementById('faturamentoChart').parentNode;
+                    container.innerHTML = '<div class="alert alert-warning">Não há dados de faturamento para exibir.</div>';
+                    return;
+                }
+                
+                // Obter o elemento canvas
+                const canvas = document.getElementById('faturamentoChart');
+                if (!canvas) {
+                    console.error('Elemento canvas não encontrado');
+                    return;
+                }
+                
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    console.error('Não foi possível obter o contexto 2d do canvas');
+                    return;
+                }
+                
+                // Destruir o gráfico anterior se existir para evitar vazamentos de memória
+                if (window.faturamentoChart instanceof Chart) {
+                    window.faturamentoChart.destroy();
+                    window.faturamentoChart = null;
+                }
+                
+                // Formatar os dados para o gráfico
+                const labels = [];
+                const values = [];
+                
+                // Processar os dados com validação
+                dados.forEach(d => {
+                    if (d && d.data) {
+                        labels.push(formatarData(d.data));
+                        
+                        const valor = parseFloat(d.faturamento);
+                        values.push(isNaN(valor) ? 0 : valor);
+                    }
+                });
+                
+                // Verificar novamente se temos dados válidos após o processamento
+                if (labels.length === 0 || values.length === 0) {
+                    console.error('Dados processados inválidos para o gráfico');
+                    canvas.parentNode.innerHTML = '<div class="alert alert-warning">Não há dados de faturamento válidos para exibir.</div>';
+                    return;
+                }
+                
+                // Criar o novo gráfico
+                window.faturamentoChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Faturamento Diário',
+                            data: values,
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return 'R$ ' + value.toFixed(2);
+                                    }
                                 }
                             }
-                        }
-                    },
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return 'Faturamento: R$ ' + context.parsed.y.toFixed(2);
+                        },
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return 'Faturamento: R$ ' + context.parsed.y.toFixed(2);
+                                    }
                                 }
                             }
                         }
                     }
+                });
+                
+                console.log('Gráfico de faturamento criado com sucesso');
+            } catch (error) {
+                console.error('Erro ao criar gráfico de faturamento:', error);
+                const canvas = document.getElementById('faturamentoChart');
+                if (canvas && canvas.parentNode) {
+                    canvas.parentNode.innerHTML = '<div class="alert alert-danger">Erro ao criar o gráfico de faturamento: ' + error.message + '</div>';
                 }
-            });
+            }
         }
 
         function aplicarFiltros() {
             carregarMovimentacoes();
             carregarEstatisticasSaloes();
             carregarEstatisticas();
+            carregarGraficoFaturamento(); // Recarregar o gráfico quando os filtros forem aplicados
         }
 
         function limparFiltros() {
@@ -666,11 +742,52 @@
         }
 
         function formatarData(data) {
-            return new Date(data + 'T00:00:00').toLocaleDateString('pt-BR');
+            if (!data) return '';
+            
+            try {
+                // Verificar se a data já está no formato dd/mm/yyyy
+                if (data.includes('/')) {
+                    return data;
+                }
+                
+                // Tentar converter a data para objeto Date
+                const dataObj = new Date(data + 'T00:00:00');
+                if (isNaN(dataObj.getTime())) {
+                    // Se a data for inválida, tentar outro formato
+                    const partes = data.split('-');
+                    if (partes.length === 3) {
+                        return `${partes[2]}/${partes[1]}/${partes[0]}`;
+                    }
+                    return data; // Retornar a string original se não conseguir converter
+                }
+                
+                // Formatar a data no padrão brasileiro (dd/mm/yyyy)
+                const dia = dataObj.getDate().toString().padStart(2, '0');
+                const mes = (dataObj.getMonth() + 1).toString().padStart(2, '0');
+                const ano = dataObj.getFullYear();
+                
+                return `${dia}/${mes}/${ano}`;
+            } catch (e) {
+                console.error('Erro ao formatar data:', e);
+                return data;
+            }
         }
 
         function formatarMoeda(valor) {
-            return 'R$ ' + parseFloat(valor || 0).toFixed(2).replace('.', ',');
+            if (valor === null || valor === undefined) return 'R$ 0,00';
+            
+            try {
+                // Converter para número se for string
+                const numero = typeof valor === 'string' ? parseFloat(valor.replace(/[^0-9,.-]/g, '').replace(',', '.')) : parseFloat(valor);
+                
+                if (isNaN(numero)) return 'R$ 0,00';
+                
+                // Formatar com separador de milhares e duas casas decimais
+                return 'R$ ' + numero.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            } catch (e) {
+                console.error('Erro ao formatar moeda:', e);
+                return 'R$ 0,00';
+            }
         }
 
         function logout() {
