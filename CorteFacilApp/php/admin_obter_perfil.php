@@ -3,7 +3,7 @@ session_start();
 header('Content-Type: application/json');
 
 // Verificar se o usuário está logado como admin
-if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
+if (!isset($_SESSION['admin_id'])) {
     echo json_encode(['status' => 'error', 'message' => 'Acesso negado']);
     exit;
 }
@@ -12,7 +12,7 @@ try {
     require_once 'conexao.php';
     
     $stmt = $conn->prepare("SELECT id, nome, email FROM usuarios WHERE id = :id AND tipo = 'admin'");
-    $stmt->execute(['id' => $_SESSION['user_id']]);
+    $stmt->execute(['id' => $_SESSION['admin_id']]);
     $admin = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if ($admin) {

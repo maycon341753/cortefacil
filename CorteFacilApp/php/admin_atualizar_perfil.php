@@ -3,7 +3,7 @@ session_start();
 header('Content-Type: application/json');
 
 // Verificar se o usuário está logado como admin
-if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
+if (!isset($_SESSION['admin_id'])) {
     echo json_encode(['status' => 'error', 'message' => 'Acesso negado']);
     exit;
 }
@@ -43,7 +43,7 @@ try {
     
     // Verificar se o email já existe para outro usuário
     $stmt = $conn->prepare("SELECT id FROM usuarios WHERE email = :email AND id != :id");
-    $stmt->execute(['email' => $email, 'id' => $_SESSION['user_id']]);
+    $stmt->execute(['email' => $email, 'id' => $_SESSION['admin_id']]);
     if ($stmt->fetch()) {
         echo json_encode(['status' => 'error', 'message' => 'Este email já está sendo usado por outro usuário']);
         exit;
@@ -63,7 +63,7 @@ try {
         
         // Verificar senha atual
         $stmt = $conn->prepare("SELECT senha FROM usuarios WHERE id = :id");
-        $stmt->execute(['id' => $_SESSION['user_id']]);
+        $stmt->execute(['id' => $_SESSION['admin_id']]);
         $admin = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if (!$admin || !password_verify($senhaAtual, $admin['senha'])) {
@@ -78,7 +78,7 @@ try {
             'nome' => $nome,
             'email' => $email,
             'senha' => $senhaHash,
-            'id' => $_SESSION['user_id']
+            'id' => $_SESSION['admin_id']
         ]);
     } else {
         // Atualizar apenas nome e email
@@ -86,12 +86,12 @@ try {
         $stmt->execute([
             'nome' => $nome,
             'email' => $email,
-            'id' => $_SESSION['user_id']
+            'id' => $_SESSION['admin_id']
         ]);
     }
     
     // Atualizar sessão
-    $_SESSION['user_name'] = $nome;
+    $_SESSION['admin_name'] = $nome;
     
     echo json_encode([
         'status' => 'ok',

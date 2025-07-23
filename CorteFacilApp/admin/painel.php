@@ -387,7 +387,7 @@ include '../php/verificar_admin.php';
         // Função para fazer logout
         function logout() {
             // Limpa a sessão
-            fetch('http://localhost/cortefacil/CorteFacilApp/php/admin_logout.php', {
+            fetch('http://localhost:8000/CorteFacilApp/php/admin_logout.php', {
                 credentials: 'include'
             })
             .then(response => response.json())
@@ -406,7 +406,7 @@ include '../php/verificar_admin.php';
 
             // Carregar dados das estatísticas
             console.log('Iniciando carregamento das estatísticas...');
-            fetch('http://localhost/cortefacil/CorteFacilApp/php/admin_dashboard_stats.php', {
+            fetch('http://localhost:8000/CorteFacilApp/php/admin_dashboard_stats.php', {
                 credentials: 'include',
                 headers: {
                     'Accept': 'application/json'
@@ -438,7 +438,7 @@ include '../php/verificar_admin.php';
             });
 
             // Carregar últimos agendamentos
-            fetch('http://localhost/cortefacil/CorteFacilApp/php/admin_ultimos_agendamentos.php', {
+            fetch('http://localhost:8000/CorteFacilApp/php/admin_ultimos_agendamentos.php', {
                 credentials: 'include'
             })
             .then(response => response.json())
@@ -485,7 +485,7 @@ include '../php/verificar_admin.php';
             });
 
             // Carregar metas do mês
-            fetch('http://localhost/cortefacil/CorteFacilApp/php/admin_metas_mes.php', {
+            fetch('http://localhost:8000/CorteFacilApp/php/admin_metas_mes.php', {
                 credentials: 'include'
             })
             .then(response => response.json())
@@ -520,7 +520,7 @@ include '../php/verificar_admin.php';
 
         // Função para carregar dados do perfil do administrador
         function carregarPerfilAdmin() {
-            fetch('http://localhost/cortefacil/CorteFacilApp/php/admin_obter_perfil.php', {
+            fetch('http://localhost:8000/CorteFacilApp/php/admin_obter_perfil.php', {
                 credentials: 'include'
             })
             .then(response => response.json())
@@ -576,7 +576,7 @@ include '../php/verificar_admin.php';
                 email: email
             };
 
-            fetch('http://localhost/cortefacil/CorteFacilApp/php/admin_atualizar_perfil.php', {
+            fetch('http://localhost:8000/CorteFacilApp/php/admin_atualizar_perfil.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -631,7 +631,7 @@ include '../php/verificar_admin.php';
                 nova_senha: novaSenha
             };
 
-            fetch('http://localhost/cortefacil/CorteFacilApp/php/admin_atualizar_perfil.php', {
+            fetch('http://localhost:8000/CorteFacilApp/php/admin_atualizar_perfil.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
