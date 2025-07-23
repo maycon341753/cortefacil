@@ -1,3 +1,6 @@
+<?php
+include '../php/verificar_admin.php';
+?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -114,7 +117,7 @@
 
         <ul class="nav flex-column">
             <li class="nav-item">
-                <a href="painel.html" class="nav-link">
+                <a href="painel.php" class="nav-link">
                     <i class="fas fa-home"></i>
                     Dashboard
                 </a>

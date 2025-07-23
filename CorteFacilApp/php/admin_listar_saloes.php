@@ -113,10 +113,10 @@ try {
     
     if (empty($saloes)) {
         error_log("Nenhum salão encontrado");
-        echo json_encode([]);
+        echo json_encode(['status' => 'sucesso', 'data' => []]);
     } else {
         error_log("Retornando lista de salões: " . json_encode($saloes));
-        echo json_encode($saloes);
+        echo json_encode(['status' => 'sucesso', 'data' => $saloes]);
     }
 
 } catch (Exception $e) {

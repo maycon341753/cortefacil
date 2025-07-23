@@ -147,6 +147,13 @@ try {
         <div class="codigo-cupom">
             <?php echo htmlspecialchars($cupom['codigo']); ?>
         </div>
+        
+        <?php if ($cupom['tipo_cupom'] === 'corte_gratis'): ?>
+        <div class="alert alert-success text-center mb-4">
+            <i class="fas fa-cut me-2"></i>
+            <strong>CUPOM DE CORTE GRÁTIS</strong>
+        </div>
+        <?php endif; ?>
 
         <div class="info-section">
             <div class="info-title">Informações do Salão</div>
@@ -167,6 +174,16 @@ try {
         <div class="info-section">
             <div class="info-title">Detalhes do Cupom</div>
             <div class="info-row">
+                <span class="info-label">Tipo de Cupom:</span>
+                <span class="info-value">
+                    <?php if ($cupom['tipo_cupom'] === 'corte_gratis'): ?>
+                        <span class="badge bg-success">Corte Grátis</span>
+                    <?php else: ?>
+                        <span class="badge bg-primary">Normal</span>
+                    <?php endif; ?>
+                </span>
+            </div>
+            <div class="info-row">
                 <span class="info-label">Data de Geração:</span>
                 <span class="info-value"><?php echo date('d/m/Y H:i', strtotime($cupom['data_geracao'])); ?></span>
             </div>
@@ -174,6 +191,16 @@ try {
                 <span class="info-label">Data de Expiração:</span>
                 <span class="info-value"><?php echo date('d/m/Y', strtotime($cupom['data_expiracao'])); ?></span>
             </div>
+            <?php if ($cupom['tipo_cupom'] === 'corte_gratis'): ?>
+            <div class="info-row">
+                <span class="info-label">Data Limite para Ressarcimento:</span>
+                <span class="info-value"><?php 
+                    $data_ressarcimento = new DateTime($cupom['data_geracao']);
+                    $data_ressarcimento->add(new DateInterval('P60D'));
+                    echo $data_ressarcimento->format('d/m/Y'); 
+                ?></span>
+            </div>
+            <?php endif; ?>
             <div class="info-row">
                 <span class="info-label">Valor de Ressarcimento:</span>
                 <span class="info-value">R$ <?php echo number_format($cupom['valor_ressarcimento'], 2, ',', '.'); ?></span>

@@ -28,6 +28,7 @@ try {
         SELECT 
             c.*,
             s.nome_fantasia as nome_salao,
+            c.tipo_cupom,
             CASE 
                 WHEN c.status = 'disponivel' AND c.data_expiracao < CURRENT_DATE() THEN 'expirado'
                 ELSE c.status
@@ -46,7 +47,7 @@ try {
         unset($cupom['status_atual']);
     }
 
-    echo json_encode($cupons);
+    echo json_encode(['data' => $cupons]);
 
 } catch (Exception $e) {
     http_response_code(500);

@@ -15,17 +15,22 @@ if (!isset($_SESSION['admin_id'])) {
 try {
     $conn = getConexao();
     
+    // Consulta que inclui agendamentos pagos com prioridade
     $query = "SELECT 
                 a.id,
                 a.data,
                 a.hora,
                 a.status,
+                a.status_pagamento,
                 u.nome as cliente_nome,
                 s.nome_fantasia as salao_nome
               FROM agendamentos a
               JOIN usuarios u ON a.cliente_id = u.id
               JOIN saloes s ON a.salao_id = s.id
-              ORDER BY a.data DESC, a.hora DESC
+              ORDER BY 
+                CASE WHEN a.status_pagamento = 'pago' THEN 0 ELSE 1 END, 
+                a.data DESC, 
+                a.hora DESC
               LIMIT 3";
               
     $stmt = $conn->prepare($query);

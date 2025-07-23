@@ -1,9 +1,5 @@
 <?php
-session_start();
-if (!isset($_SESSION['admin_id'])) {
-    header('Location: ../admin_login.html');
-    exit;
-}
+include '../php/verificar_admin.php';
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -144,7 +140,7 @@ if (!isset($_SESSION['admin_id'])) {
 
         <ul class="nav flex-column">
             <li class="nav-item">
-                <a href="painel.html" class="nav-link">
+                <a href="painel.php" class="nav-link">
                     <i class="fas fa-home"></i>
                     Dashboard
                 </a>
@@ -220,6 +216,7 @@ if (!isset($_SESSION['admin_id'])) {
                         <tr>
                             <th>Código</th>
                             <th>Salão</th>
+                            <th>Tipo</th>
                             <th>Data Geração</th>
                             <th>Data Expiração</th>
                             <th>Status</th>
@@ -246,21 +243,36 @@ if (!isset($_SESSION['admin_id'])) {
                 <div class="modal-body">
                     <form id="formGerarCupom">
                         <div class="mb-3">
+                            <label class="form-label">Tipo de Cupom</label>
+                            <select class="form-select" name="tipo_cupom" id="tipoCupom" required>
+                                <option value="normal">Cupom Normal</option>
+                                <option value="corte_gratis">Cupom de Corte Grátis</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
                             <label class="form-label">Salão</label>
                             <select class="form-select" name="salao_id" required>
                                 <option value="">Selecione um salão</option>
                                 <!-- Opções serão carregadas via AJAX -->
                             </select>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Data de Expiração</label>
-                            <input type="date" class="form-control" name="data_expiracao" required>
+                        <div id="camposNormais">
+                            <div class="mb-3">
+                                <label class="form-label">Data de Expiração</label>
+                                <input type="date" class="form-control" name="data_expiracao">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Valor de Ressarcimento (R$)</label>
+                                <input type="number" class="form-control" name="valor_ressarcimento" step="0.01" min="0">
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Valor de Ressarcimento (R$)</label>
-                            <input type="number" class="form-control" name="valor_ressarcimento" step="0.01" min="0" required>
+                        <div id="camposCorteGratis" class="d-none">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Este cupom terá validade de 60 dias a partir de hoje e o valor de ressarcimento será calculado com base no preço médio dos serviços do salão.
+                            </div>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100">
+                        <button type="submit" id="btnGerarCupom" class="btn btn-primary w-100">
                             <i class="fas fa-ticket-alt me-2"></i>Gerar Cupom
                         </button>
                     </form>
@@ -275,6 +287,11 @@ if (!isset($_SESSION['admin_id'])) {
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
     <script>
         $(document).ready(function() {
+            // Adiciona evento de clique diretamente no botão
+            $('#btnGerarCupom').on('click', function() {
+                console.log('Botão Gerar Cupom clicado diretamente');
+            });
+            
             // Inicializa DataTable
             const table = $('#tabelaCupons').DataTable({
                 language: {
@@ -282,11 +299,21 @@ if (!isset($_SESSION['admin_id'])) {
                 },
                 ajax: {
                     url: '../php/admin_listar_cupons.php',
-                    dataSrc: ''
+                    dataSrc: 'data'
                 },
                 columns: [
                     { data: 'codigo' },
                     { data: 'nome_salao' },
+                    { 
+                        data: 'tipo_cupom',
+                        render: function(data) {
+                            if (data === 'corte_gratis') {
+                                return '<span class="badge bg-success">Corte Grátis</span>';
+                            } else {
+                                return '<span class="badge bg-primary">Normal</span>';
+                            }
+                        }
+                    },
                     { 
                         data: 'data_geracao',
                         render: function(data) {
@@ -364,19 +391,85 @@ if (!isset($_SESSION['admin_id'])) {
                 }
             });
 
+            // Alterna entre os tipos de cupom
+            $('#tipoCupom').on('change', function() {
+                const tipoCupom = $(this).val();
+                if (tipoCupom === 'normal') {
+                    $('#camposNormais').removeClass('d-none');
+                    $('#camposCorteGratis').addClass('d-none');
+                    $('input[name="data_expiracao"]').prop('required', true);
+                    $('input[name="valor_ressarcimento"]').prop('required', true);
+                } else if (tipoCupom === 'corte_gratis') {
+                    $('#camposNormais').addClass('d-none');
+                    $('#camposCorteGratis').removeClass('d-none');
+                    $('input[name="data_expiracao"]').prop('required', false);
+                    $('input[name="valor_ressarcimento"]').prop('required', false);
+                }
+            });
+
             // Manipula o envio do formulário de geração de cupom
             $('#formGerarCupom').on('submit', function(e) {
                 e.preventDefault();
+                console.log('Formulário de geração de cupom enviado');
                 const formData = new FormData(this);
+                const tipoCupom = $('#tipoCupom').val();
+                
+                // Log dos dados do formulário
+                console.log('Tipo de cupom:', tipoCupom);
+                console.log('Salão ID:', $('select[name="salao_id"]').val());
+                
+                // Validação adicional para cupom normal
+                if (tipoCupom === 'normal') {
+                    const dataExpiracao = $('input[name="data_expiracao"]').val();
+                    const valorRessarcimento = $('input[name="valor_ressarcimento"]').val();
+                    
+                    if (!dataExpiracao || !valorRessarcimento) {
+                        alert('Por favor, preencha todos os campos obrigatórios.');
+                        return;
+                    }
+                }
 
+                console.log('Enviando requisição AJAX para gerar cupom...');
                 $.ajax({
                     url: '../php/admin_gerar_cupom.php',
                     method: 'POST',
                     data: formData,
                     processData: false,
                     contentType: false,
+                    xhrFields: {
+                        withCredentials: true
+                    },
+                    beforeSend: function(xhr) {
+                        console.log('Enviando requisição para:', this.url);
+                        console.log('Cookies disponíveis:', document.cookie);
+                    },
                     success: function(response) {
                         if (response.status === 'sucesso') {
+                            alert('Cupom gerado com sucesso!');
+                            $('#modalGerarCupom').modal('hide');
+                            $('#formGerarCupom')[0].reset();
+                            table.ajax.reload();
+                        } else {
+                            alert('Erro ao gerar cupom: ' + response.mensagem);
+                        }
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        console.error('Erro ao gerar cupom:', {
+                            status: jqXHR.status,
+                            statusText: jqXHR.statusText,
+                            responseText: jqXHR.responseText,
+                            textStatus: textStatus,
+                            errorThrown: errorThrown
+                        });
+                        alert('Erro ao comunicar com o servidor');
+                    }
+                });
+            });
+        });
+
+        function visualizarCupom(codigo) {
+            window.open(`../php/visualizar_cupom.php?codigo=${codigo}`, '_blank');
+        }
 
         // Funções do menu lateral e perfil
         function logout() {
@@ -420,24 +513,6 @@ if (!isset($_SESSION['admin_id'])) {
                 }
             })
             .catch(error => console.error('Erro ao carregar perfil:', error));
-
-                            alert('Cupom gerado com sucesso!');
-                            $('#modalGerarCupom').modal('hide');
-                            table.ajax.reload();
-                        } else {
-                            alert('Erro ao gerar cupom: ' + response.mensagem);
-                        }
-                    },
-                    error: function() {
-                        alert('Erro ao comunicar com o servidor');
-                    }
-                });
-            });
-        });
-
-        function visualizarCupom(codigo) {
-            window.open(`../php/visualizar_cupom.php?codigo=${codigo}`, '_blank');
-        }
     </script>
 </body>
 </html>

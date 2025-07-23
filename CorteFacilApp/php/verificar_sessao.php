@@ -15,7 +15,7 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['tipo'])) {
     exit;
 }
 
-if ($_SESSION['tipo'] !== 'cliente') {
+if ($_SESSION['tipo'] !== 'cliente' && $_SESSION['tipo'] !== 'admin') {
     header('Location: ../index.html');
     exit;
 }
