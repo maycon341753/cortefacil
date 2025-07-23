@@ -653,8 +653,8 @@ try {
             <div class="row justify-content-center">
                 <div class="col-md-6">
                     <div class="input-group">
-                        <input type="text" class="form-control form-control-lg" placeholder="Busque por salão ou serviço...">
-                        <button class="btn btn-lg btn-agendar" type="button">
+                        <input type="text" class="form-control form-control-lg" id="bannerSearchInput" placeholder="Busque por salão ou serviço...">
+                        <button class="btn btn-lg btn-agendar" type="button" id="bannerSearchButton">
                             <i class="bi bi-search"></i> Buscar
                         </button>
                     </div>
@@ -874,8 +874,28 @@ try {
 
         <!-- Seção de Meus Agendamentos -->
         <div id="meusAgendamentosSection" style="display: none;">
-            <h2 class="mb-4">Meus Agendamentos</h2>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">Meus Agendamentos</h2>
+                <div class="d-flex align-items-center">
+                    <span class="text-muted me-3" id="agendamentosInfo">Mostrando 0 de 0 agendamentos</span>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnPrevPage" disabled>
+                            <i class="bi bi-chevron-left"></i> Anterior
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnNextPage" disabled>
+                            Próxima <i class="bi bi-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
             <div class="row" id="agendamentosList"></div>
+            <div class="d-flex justify-content-center mt-4" id="paginationContainer" style="display: none;">
+                <nav aria-label="Navegação de páginas">
+                    <ul class="pagination" id="paginationList">
+                        <!-- Páginas serão inseridas dinamicamente -->
+                    </ul>
+                </nav>
+            </div>
         </div>
     </div>
 

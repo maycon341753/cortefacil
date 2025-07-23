@@ -264,12 +264,65 @@ async function loadSaloes() {
             console.error('Erro ao inserir HTML no container:', error);
         }
         
-        // Inicializar pesquisa
+        // Inicializar pesquisa para o campo da navbar
         const searchElement = document.getElementById('searchSalao');
         if (searchElement) {
             searchElement.addEventListener('input', function(e) {
                 const searchTerm = e.target.value.toLowerCase();
                 filterSaloes(searchTerm);
+                // Sincronizar com o campo do banner
+                const bannerInput = document.getElementById('bannerSearchInput');
+                if (bannerInput && bannerInput.value.toLowerCase() !== searchTerm) {
+                    bannerInput.value = e.target.value;
+                }
+            });
+        }
+        
+        // Inicializar pesquisa para o campo do banner
+        const bannerSearchInput = document.getElementById('bannerSearchInput');
+        const bannerSearchButton = document.getElementById('bannerSearchButton');
+        
+        if (bannerSearchInput) {
+            bannerSearchInput.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                filterSaloes(searchTerm);
+                // Sincronizar com o campo da navbar
+                if (searchElement && searchElement.value.toLowerCase() !== searchTerm) {
+                    searchElement.value = e.target.value;
+                }
+            });
+            
+            bannerSearchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const searchTerm = e.target.value.toLowerCase();
+                    filterSaloes(searchTerm);
+                }
+            });
+        }
+        
+        if (bannerSearchButton) {
+            bannerSearchButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                const searchInput = document.getElementById('bannerSearchInput');
+                if (searchInput) {
+                    const searchTerm = searchInput.value.toLowerCase();
+                    filterSaloes(searchTerm);
+                }
+            });
+        }
+        
+        // Adicionar botão de limpar busca na navbar
+        const searchButton = document.getElementById('searchButton');
+        if (searchButton && searchElement) {
+            searchButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                searchElement.value = '';
+                const bannerInput = document.getElementById('bannerSearchInput');
+                if (bannerInput) {
+                    bannerInput.value = '';
+                }
+                filterSaloes('');
             });
         }
         
@@ -284,18 +337,69 @@ async function loadSaloes() {
 
 // Função para filtrar salões por termo de pesquisa
 function filterSaloes(searchTerm) {
-    const saloes = document.querySelectorAll('.salao-item');
+    console.log('filterSaloes chamada com termo:', searchTerm);
     
-    saloes.forEach(salao => {
-        const salaoNome = salao.querySelector('.salao-nome').textContent.toLowerCase();
-        const salaoEndereco = salao.querySelector('.salao-endereco').textContent.toLowerCase();
+    const saloes = document.querySelectorAll('.salao-item');
+    console.log('Número de salões encontrados:', saloes.length);
+    
+    let saloesVisiveis = 0;
+    
+    saloes.forEach((salao, index) => {
+        const salaoNomeElement = salao.querySelector('.salao-nome');
+        const salaoEnderecoElement = salao.querySelector('.salao-endereco');
         
-        if (salaoNome.includes(searchTerm) || salaoEndereco.includes(searchTerm)) {
+        if (!salaoNomeElement || !salaoEnderecoElement) {
+            console.warn('Elementos de nome ou endereço não encontrados no salão:', salao);
+            return;
+        }
+        
+        const salaoNome = salaoNomeElement.textContent.toLowerCase();
+        const salaoEndereco = salaoEnderecoElement.textContent.toLowerCase();
+        
+        console.log(`Salão ${index + 1}: Nome="${salaoNome}", Endereço="${salaoEndereco}"`);
+        
+        // Buscar por nome do salão, endereço completo ou cidade
+        const matchesSearch = salaoNome.includes(searchTerm) || 
+                             salaoEndereco.includes(searchTerm) ||
+                             // Extrair apenas a cidade do endereço (parte após a vírgula)
+                             (salaoEndereco.includes(',') && 
+                              salaoEndereco.split(',').pop().trim().includes(searchTerm));
+        
+        console.log(`Salão ${index + 1} matches search "${searchTerm}":`, matchesSearch);
+        
+        if (matchesSearch) {
             salao.style.display = 'block';
+            saloesVisiveis++;
         } else {
             salao.style.display = 'none';
         }
     });
+    
+    // Mostrar mensagem se nenhum salão for encontrado
+    const saloesContainer = document.getElementById('saloesList');
+    if (saloesContainer) {
+        let noResultsMessage = saloesContainer.querySelector('.no-results-message');
+        
+        if (saloesVisiveis === 0 && searchTerm.trim() !== '') {
+            if (!noResultsMessage) {
+                noResultsMessage = document.createElement('div');
+                noResultsMessage.className = 'col-12 no-results-message';
+                noResultsMessage.innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="bi bi-search" style="font-size: 3rem; color: #ccc;"></i>
+                        <h4 class="mt-3 text-muted">Nenhum salão encontrado</h4>
+                        <p class="text-muted">Tente buscar por outro nome ou cidade</p>
+                    </div>
+                `;
+                saloesContainer.appendChild(noResultsMessage);
+            }
+            noResultsMessage.style.display = 'block';
+        } else if (noResultsMessage) {
+            noResultsMessage.style.display = 'none';
+        }
+    }
+    
+    console.log(`Filtro aplicado: "${searchTerm}" - ${saloesVisiveis} salões visíveis`);
 }
 
 // Função para gerar estrelas de avaliação
@@ -763,6 +867,11 @@ async function confirmarAgendamento() {
 }
 
 // Função para carregar meus agendamentos
+// Variáveis para paginação de agendamentos
+let currentPage = 1;
+let agendamentosPerPage = 6;
+let totalAgendamentos = [];
+
 async function loadMeusAgendamentos() {
     console.log('loadMeusAgendamentos chamada');
     try {
@@ -776,49 +885,15 @@ async function loadMeusAgendamentos() {
             throw new Error(data.message || 'Erro ao carregar agendamentos');
         }
 
-        const agendamentosContainer = document.getElementById('agendamentosList');
-        console.log('Container encontrado:', agendamentosContainer);
-        agendamentosContainer.innerHTML = data.agendamentos.map(agendamento => {
-            const statusClass = {
-                'pendente': 'status-pendente',
-                'confirmado': 'status-confirmado',
-                'realizado': 'status-realizado',
-                'cancelado': 'status-cancelado'
-            }[agendamento.status] || 'status-pendente';
-
-            return `
-                <div class="col-md-4 mb-3">
-                    <div class="card agendamento-card">
-                        <div class="card-body">
-                            <span class="status-badge ${statusClass}">${agendamento.status}</span>
-                            <h5 class="card-title">${agendamento.servico}</h5>
-                            <p class="card-text">
-                                <i class="bi bi-shop"></i> ${agendamento.salao}<br>
-                                <i class="bi bi-person"></i> ${agendamento.profissional}<br>
-                                <i class="bi bi-calendar-event"></i> ${agendamento.data}<br>
-                                <i class="bi bi-clock"></i> ${agendamento.hora}<br>
-                                <i class="bi bi-currency-dollar"></i> R$ ${agendamento.valor}
-                            </p>
-                            ${agendamento.status === 'pendente' ? `
-                                <button class="btn btn-outline-danger w-100" onclick="cancelarAgendamento(${agendamento.id})">
-                                    <i class="bi bi-x-circle"></i> Cancelar Agendamento
-                                </button>
-                            ` : ''}
-                        </div>
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-        if (data.agendamentos.length === 0) {
-            agendamentosContainer.innerHTML = `
-                <div class="col-12">
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle"></i> Você não possui agendamentos.
-                    </div>
-                </div>
-            `;
-        }
+        // Armazenar todos os agendamentos
+        totalAgendamentos = data.agendamentos || [];
+        
+        // Resetar para primeira página
+        currentPage = 1;
+        
+        // Renderizar agendamentos paginados
+        renderAgendamentosPaginados();
+        
     } catch (error) {
         const agendamentosContainer = document.getElementById('agendamentosList');
         agendamentosContainer.innerHTML = `
@@ -828,8 +903,166 @@ async function loadMeusAgendamentos() {
                 </div>
             </div>
         `;
+        updatePaginationInfo(0, 0, 0);
     }
 }
+
+function renderAgendamentosPaginados() {
+    const agendamentosContainer = document.getElementById('agendamentosList');
+    
+    if (totalAgendamentos.length === 0) {
+        agendamentosContainer.innerHTML = `
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> Você não possui agendamentos.
+                </div>
+            </div>
+        `;
+        updatePaginationInfo(0, 0, 0);
+        return;
+    }
+
+    // Calcular índices para a página atual
+    const startIndex = (currentPage - 1) * agendamentosPerPage;
+    const endIndex = startIndex + agendamentosPerPage;
+    const agendamentosPagina = totalAgendamentos.slice(startIndex, endIndex);
+    
+    // Renderizar agendamentos da página atual
+    agendamentosContainer.innerHTML = agendamentosPagina.map(agendamento => {
+        const statusClass = {
+            'pendente': 'status-pendente',
+            'confirmado': 'status-confirmado',
+            'realizado': 'status-realizado',
+            'cancelado': 'status-cancelado'
+        }[agendamento.status] || 'status-pendente';
+
+        return `
+            <div class="col-md-4 mb-3">
+                <div class="card agendamento-card">
+                    <div class="card-body">
+                        <span class="status-badge ${statusClass}">${agendamento.status}</span>
+                        <h5 class="card-title">${agendamento.servico}</h5>
+                        <p class="card-text">
+                            <i class="bi bi-shop"></i> ${agendamento.salao}<br>
+                            <i class="bi bi-person"></i> ${agendamento.profissional}<br>
+                            <i class="bi bi-calendar-event"></i> ${agendamento.data}<br>
+                            <i class="bi bi-clock"></i> ${agendamento.hora}<br>
+                            <i class="bi bi-currency-dollar"></i> R$ ${agendamento.valor}
+                        </p>
+                        ${agendamento.status === 'pendente' ? `
+                            <button class="btn btn-outline-danger w-100" onclick="cancelarAgendamento(${agendamento.id})">
+                                <i class="bi bi-x-circle"></i> Cancelar Agendamento
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    // Atualizar informações de paginação
+    const totalPages = Math.ceil(totalAgendamentos.length / agendamentosPerPage);
+    updatePaginationInfo(startIndex + 1, Math.min(endIndex, totalAgendamentos.length), totalAgendamentos.length);
+    updatePaginationControls(totalPages);
+}
+
+function updatePaginationInfo(start, end, total) {
+    const infoElement = document.getElementById('agendamentosInfo');
+    if (total === 0) {
+        infoElement.textContent = 'Nenhum agendamento encontrado';
+    } else {
+        infoElement.textContent = `Mostrando ${start} a ${end} de ${total} agendamentos`;
+    }
+}
+
+function updatePaginationControls(totalPages) {
+    const btnPrev = document.getElementById('btnPrevPage');
+    const btnNext = document.getElementById('btnNextPage');
+    const paginationContainer = document.getElementById('paginationContainer');
+    const paginationList = document.getElementById('paginationList');
+    
+    // Atualizar botões anterior/próximo
+    btnPrev.disabled = currentPage === 1;
+    btnNext.disabled = currentPage === totalPages || totalPages === 0;
+    
+    // Mostrar/esconder paginação
+    if (totalPages <= 1) {
+        paginationContainer.style.display = 'none';
+    } else {
+        paginationContainer.style.display = 'flex';
+        
+        // Gerar números das páginas
+        let paginationHTML = '';
+        
+        // Botão anterior
+        paginationHTML += `
+            <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="goToPage(${currentPage - 1})" aria-label="Anterior">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+        `;
+        
+        // Números das páginas
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                paginationHTML += `
+                    <li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="goToPage(${i})">${i}</a>
+                    </li>
+                `;
+            } else if (i === currentPage - 2 || i === currentPage + 2) {
+                paginationHTML += `
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                `;
+            }
+        }
+        
+        // Botão próximo
+        paginationHTML += `
+            <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="goToPage(${currentPage + 1})" aria-label="Próximo">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        `;
+        
+        paginationList.innerHTML = paginationHTML;
+    }
+}
+
+function goToPage(page) {
+    const totalPages = Math.ceil(totalAgendamentos.length / agendamentosPerPage);
+    if (page >= 1 && page <= totalPages && page !== currentPage) {
+        currentPage = page;
+        renderAgendamentosPaginados();
+    }
+}
+
+// Event listeners para os botões de navegação
+document.addEventListener('DOMContentLoaded', function() {
+    const btnPrev = document.getElementById('btnPrevPage');
+    const btnNext = document.getElementById('btnNextPage');
+    
+    if (btnPrev) {
+        btnPrev.addEventListener('click', function() {
+            if (currentPage > 1) {
+                goToPage(currentPage - 1);
+            }
+        });
+    }
+    
+    if (btnNext) {
+        btnNext.addEventListener('click', function() {
+            const totalPages = Math.ceil(totalAgendamentos.length / agendamentosPerPage);
+            if (currentPage < totalPages) {
+                goToPage(currentPage + 1);
+            }
+        });
+    }
+});
 
 // Função para cancelar agendamento
 async function cancelarAgendamento(agendamentoId) {
