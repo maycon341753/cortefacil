@@ -33,12 +33,73 @@ function validarDadosFuncionario($dados) {
     return $erros;
 }
 
+// Função para sincronizar funcionário com a tabela profissionais
+function sincronizarProfissional($conn, $funcionario_id, $acao = 'inserir') {
+    try {
+        if ($acao === 'inserir' || $acao === 'atualizar') {
+            // Busca os dados do funcionário
+            $stmt = $conn->prepare("SELECT * FROM funcionarios WHERE id = ?");
+            $stmt->execute([$funcionario_id]);
+            $funcionario = $stmt->fetch();
+            
+            if (!$funcionario) {
+                return false;
+            }
+            
+            // Verifica se já existe um profissional para este funcionário
+            $stmt = $conn->prepare("SELECT id FROM profissionais WHERE funcionario_id = ?");
+            $stmt->execute([$funcionario_id]);
+            $profissional_existente = $stmt->fetch();
+            
+            if ($profissional_existente) {
+                // Atualiza o profissional existente
+                $sql = "UPDATE profissionais SET 
+                        nome = ?, 
+                        especialidade = ?, 
+                        telefone = ?, 
+                        ativo = ? 
+                        WHERE funcionario_id = ?";
+                $stmt = $conn->prepare($sql);
+                $stmt->execute([
+                    $funcionario['nome'],
+                    $funcionario['especialidade'],
+                    $funcionario['telefone'],
+                    $funcionario['ativo'],
+                    $funcionario_id
+                ]);
+            } else {
+                // Insere novo profissional
+                $sql = "INSERT INTO profissionais (nome, salao_id, especialidade, telefone, ativo, funcionario_id) 
+                        VALUES (?, ?, ?, ?, ?, ?)";
+                $stmt = $conn->prepare($sql);
+                $stmt->execute([
+                    $funcionario['nome'],
+                    $funcionario['salao_id'],
+                    $funcionario['especialidade'],
+                    $funcionario['telefone'],
+                    $funcionario['ativo'],
+                    $funcionario_id
+                ]);
+            }
+        } elseif ($acao === 'excluir') {
+            // Remove o profissional correspondente
+            $stmt = $conn->prepare("DELETE FROM profissionais WHERE funcionario_id = ?");
+            $stmt->execute([$funcionario_id]);
+        }
+        
+        return true;
+    } catch (Exception $e) {
+        error_log("Erro ao sincronizar profissional: " . $e->getMessage());
+        return false;
+    }
+}
+
 // Rota para listar funcionários
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     try {
         $salao_id = $_SESSION['salao_id'];
         
-        $sql = "SELECT id, nome, email, telefone, ativo, horario_trabalho_inicio, horario_trabalho_fim, dias_trabalho 
+        $sql = "SELECT id, nome, email, telefone, especialidade, valor_servico, ativo, horario_trabalho_inicio, horario_trabalho_fim, dias_trabalho 
                 FROM funcionarios 
                 WHERE salao_id = ?";
         $stmt = $conn->prepare($sql);
@@ -77,8 +138,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit;
             }
             
-            $sql = "INSERT INTO funcionarios (nome, email, senha, telefone, salao_id, horario_trabalho_inicio, horario_trabalho_fim, dias_trabalho) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)";;
+            $sql = "INSERT INTO funcionarios (nome, email, senha, telefone, salao_id, especialidade, valor_servico, horario_trabalho_inicio, horario_trabalho_fim, dias_trabalho) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";;
             $stmt = $conn->prepare($sql);
             $stmt->execute([
                 $dados['nome'],
@@ -86,10 +147,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 password_hash($dados['senha'], PASSWORD_DEFAULT),
                 $dados['telefone'] ?? null,
                 $_SESSION['salao_id'],
+                $dados['especialidade'] ?? null,
+                $dados['valor_servico'] ?? 0.00,
                 $dados['horario_trabalho_inicio'] ?? '09:00',
                 $dados['horario_trabalho_fim'] ?? '18:00',
                 $dados['dias_trabalho'] ?? '1,2,3,4,5,6'
             ]);
+            
+            // Obter o ID do funcionário recém-criado
+            $funcionario_id = $conn->lastInsertId();
+            
+            // Sincronizar com a tabela profissionais
+            sincronizarProfissional($conn, $funcionario_id, 'inserir');
             
             echo json_encode(['status' => 'sucesso', 'mensagem' => 'Funcionário cadastrado com sucesso']);
         } else if ($acao === 'atualizar' && isset($dados['id'])) {
@@ -125,6 +194,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $valores[] = $dados['telefone'];
             }
             
+            if (isset($dados['especialidade'])) {
+                $campos[] = 'especialidade = ?';
+                $valores[] = $dados['especialidade'];
+            }
+            
+            if (isset($dados['valor_servico'])) {
+                $campos[] = 'valor_servico = ?';
+                $valores[] = $dados['valor_servico'];
+            }
+            
             if (isset($dados['ativo'])) {
                 $campos[] = 'ativo = ?';
                 $valores[] = $dados['ativo'];
@@ -150,6 +229,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $sql = "UPDATE funcionarios SET " . implode(', ', $campos) . " WHERE id = ?";
                 $stmt = $conn->prepare($sql);
                 $stmt->execute($valores);
+                
+                // Sincronizar com a tabela profissionais
+                sincronizarProfissional($conn, $dados['id'], 'atualizar');
                 
                 echo json_encode(['status' => 'sucesso', 'mensagem' => 'Funcionário atualizado com sucesso']);
             } else {
@@ -186,6 +268,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
         $sql = "DELETE FROM funcionarios WHERE id = ? AND salao_id = ?";
         $stmt = $conn->prepare($sql);
         $stmt->execute([$dados['id'], $_SESSION['salao_id']]);
+        
+        // Sincronizar com a tabela profissionais (remover)
+        sincronizarProfissional($conn, $dados['id'], 'excluir');
         
         echo json_encode(['status' => 'sucesso', 'mensagem' => 'Funcionário excluído com sucesso']);
     } catch (Exception $e) {

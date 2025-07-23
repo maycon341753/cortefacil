@@ -65,7 +65,9 @@ if (!isset($_SESSION['tipo']) || $_SESSION['tipo'] !== 'salao') {
                                 <th>Nome</th>
                                 <th>Email</th>
                                 <th>Telefone</th>
-                                <th>Horário de Trabalho</th>
+                                <th>Especialidade</th>
+                                <th>Valor do Serviço</th>
+                                <th>Horário/Dias</th>
                                 <th>Status</th>
                                 <th>Ações</th>
                             </tr>
@@ -106,6 +108,14 @@ if (!isset($_SESSION['tipo']) || $_SESSION['tipo'] !== 'salao') {
                         <div class="mb-3">
                             <label for="telefoneFuncionario" class="form-label">Telefone</label>
                             <input type="tel" class="form-control" id="telefoneFuncionario">
+                        </div>
+                        <div class="mb-3">
+                            <label for="especialidadeFuncionario" class="form-label">Especialidade</label>
+                            <input type="text" class="form-control" id="especialidadeFuncionario" placeholder="Ex: Corte Masculino, Barba, Coloração">
+                        </div>
+                        <div class="mb-3">
+                            <label for="valorServicoFuncionario" class="form-label">Valor do Serviço (R$)</label>
+                            <input type="number" class="form-control" id="valorServicoFuncionario" step="0.01" min="0" placeholder="0.00">
                         </div>
                         <div class="row mb-3">
                             <div class="col">
@@ -181,6 +191,8 @@ if (!isset($_SESSION['tipo']) || $_SESSION['tipo'] !== 'salao') {
                             <td>${funcionario.nome}</td>
                             <td>${funcionario.email}</td>
                             <td>${funcionario.telefone || '-'}</td>
+                            <td>${funcionario.especialidade || '-'}</td>
+                            <td>R$ ${parseFloat(funcionario.valor_servico || 0).toFixed(2)}</td>
                             <td>${formatarHorario(funcionario.horario_trabalho_inicio)} - ${formatarHorario(funcionario.horario_trabalho_fim)}<br>
                                 <small class="text-muted">${formatarDiasTrabalho(funcionario.dias_trabalho)}</small></td>
                             <td>
@@ -216,6 +228,8 @@ if (!isset($_SESSION['tipo']) || $_SESSION['tipo'] !== 'salao') {
             document.getElementById('nomeFuncionario').value = funcionario.nome;
             document.getElementById('emailFuncionario').value = funcionario.email;
             document.getElementById('telefoneFuncionario').value = funcionario.telefone || '';
+            document.getElementById('especialidadeFuncionario').value = funcionario.especialidade || '';
+            document.getElementById('valorServicoFuncionario').value = funcionario.valor_servico || '';
             document.getElementById('horarioInicio').value = formatarHorario(funcionario.horario_trabalho_inicio);
             document.getElementById('horarioFim').value = formatarHorario(funcionario.horario_trabalho_fim);
             document.getElementById('ativoFuncionario').checked = funcionario.ativo == 1;
@@ -260,6 +274,8 @@ if (!isset($_SESSION['tipo']) || $_SESSION['tipo'] !== 'salao') {
                 email: document.getElementById('emailFuncionario').value,
                 senha: document.getElementById('senhaFuncionario').value,
                 telefone: document.getElementById('telefoneFuncionario').value,
+                especialidade: document.getElementById('especialidadeFuncionario').value,
+                valor_servico: document.getElementById('valorServicoFuncionario').value,
                 horario_trabalho_inicio: document.getElementById('horarioInicio').value,
                 horario_trabalho_fim: document.getElementById('horarioFim').value,
                 dias_trabalho: diasTrabalho.join(','),

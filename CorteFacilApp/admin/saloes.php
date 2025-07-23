@@ -334,6 +334,8 @@ include '../php/verificar_admin.php';
 
         // Carrega lista de salões
         function carregarSaloes() {
+            console.log('Carregando salões...');
+            
             $.ajax({
                 url: '../php/admin_listar_saloes.php',
                 type: 'GET',
@@ -342,31 +344,70 @@ include '../php/verificar_admin.php';
                     withCredentials: true
                 },
                 success: function(data) {
+                    console.log('Dados recebidos:', data);
+                    
                     const tabela = $('#tabelaSaloes').DataTable();
                     tabela.clear();
 
-                    data.forEach(salao => {
+                    // Verifica se data é um array ou se tem propriedade data
+                    let saloes = Array.isArray(data) ? data : (data.data || []);
+                    
+                    console.log('Salões processados:', saloes);
+
+                    if (saloes.length === 0) {
+                        console.log('Nenhum salão encontrado');
+                        // Adiciona uma linha informando que não há salões
                         tabela.row.add([
-                            salao.nome_fantasia || '-',
-                            salao.documento || '-',
-                            salao.cidade || '-',
-                            salao.whatsapp || '-',
-                            salao.num_funcionarios || '0',
-                            salao.media_diaria || '0',
-                            `<button class="btn btn-sm btn-primary me-1" onclick="editarSalao(${salao.id})">
-                                <i class="fas fa-edit"></i>
-                             </button>
-                             <button class="btn btn-sm btn-danger" onclick="excluirSalao(${salao.id})">
-                                <i class="fas fa-trash"></i>
-                             </button>`
+                            'Nenhum registro encontrado',
+                            '-',
+                            '-',
+                            '-',
+                            '-',
+                            '-',
+                            '-'
                         ]);
-                    });
+                    } else {
+                        saloes.forEach(salao => {
+                            console.log('Adicionando salão:', salao);
+                            tabela.row.add([
+                                salao.nome_fantasia || '-',
+                                salao.documento || '-',
+                                salao.cidade || '-',
+                                salao.whatsapp || '-',
+                                salao.num_funcionarios || '0',
+                                salao.media_diaria || '0',
+                                `<button class="btn btn-sm btn-primary me-1" onclick="editarSalao(${salao.id})">
+                                    <i class="fas fa-edit"></i>
+                                 </button>
+                                 <button class="btn btn-sm btn-danger" onclick="excluirSalao(${salao.id})">
+                                    <i class="fas fa-trash"></i>
+                                 </button>`
+                            ]);
+                        });
+                    }
 
                     tabela.draw();
                 },
                 error: function(xhr, status, error) {
                     console.error('Erro ao carregar salões:', error);
-                    alert('Erro ao carregar lista de salões');
+                    console.error('Status:', status);
+                    console.error('Response:', xhr.responseText);
+                    
+                    // Mostra uma mensagem na tabela
+                    const tabela = $('#tabelaSaloes').DataTable();
+                    tabela.clear();
+                    tabela.row.add([
+                        'Erro ao carregar dados',
+                        '-',
+                        '-',
+                        '-',
+                        '-',
+                        '-',
+                        '-'
+                    ]);
+                    tabela.draw();
+                    
+                    alert('Erro ao carregar lista de salões: ' + error);
                 }
             });
         }

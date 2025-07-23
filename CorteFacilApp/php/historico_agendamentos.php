@@ -48,6 +48,10 @@ try {
         $data = date('d/m/Y', strtotime($agendamento['data']));
         $hora = date('H:i', strtotime($agendamento['hora']));
         
+        // Verificar se o valor existe e não é nulo antes de formatar
+        $valor = isset($agendamento['valor']) && $agendamento['valor'] !== null ? 
+                 number_format($agendamento['valor'], 2, ',', '.') : '0,99';
+                 
         $response['agendamentos'][] = array(
             'id' => $agendamento['id'],
             'salao' => $agendamento['nome_salao'],
@@ -56,7 +60,7 @@ try {
             'data' => $data,
             'hora' => $hora,
             'status' => $agendamento['status'],
-            'valor' => number_format($agendamento['valor'], 2, ',', '.')
+            'valor' => $valor
         );
     }
 

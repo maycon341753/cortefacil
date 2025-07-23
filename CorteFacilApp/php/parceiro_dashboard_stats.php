@@ -22,18 +22,19 @@ try {
         SELECT COUNT(*) as total
         FROM agendamentos
         WHERE salao_id = :salao_id
-        AND DATE(data_hora) = :hoje
+        AND data = :hoje
     ");
     $stmt->execute(['salao_id' => $salao_id, 'hoje' => $hoje]);
     $agendamentos_hoje = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
     // Faturamento de hoje
     $stmt = $conn->prepare("
-        SELECT COALESCE(SUM(valor), 0) as total
-        FROM agendamentos
-        WHERE salao_id = :salao_id
-        AND DATE(data_hora) = :hoje
-        AND status = 'Concluído'
+        SELECT COALESCE(SUM(s.preco), 0) as total
+        FROM agendamentos a
+        JOIN servicos s ON s.id = a.servico_id
+        WHERE a.salao_id = :salao_id
+        AND a.data = :hoje
+        AND a.status = 'realizado'
     ");
     $stmt->execute(['salao_id' => $salao_id, 'hoje' => $hoje]);
     $faturamento_hoje = floatval($stmt->fetch(PDO::FETCH_ASSOC)['total']);
@@ -43,8 +44,8 @@ try {
         SELECT COUNT(DISTINCT cliente_id) as total
         FROM agendamentos
         WHERE salao_id = :salao_id
-        AND DATE(data_hora) BETWEEN :primeiro_dia AND :ultimo_dia
-        AND status = 'Concluído'
+        AND data BETWEEN :primeiro_dia AND :ultimo_dia
+        AND status = 'realizado'
     ");
     $stmt->execute([
         'salao_id' => $salao_id,
@@ -53,49 +54,50 @@ try {
     ]);
     $clientes_mes = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
-    // Meta mensal
+    // Meta mensal (baseada em número de cortes)
     $stmt = $conn->prepare("
-        SELECT valor_meta
+        SELECT cortes_mes
         FROM metas
         WHERE salao_id = :salao_id
-        AND mes = MONTH(:hoje)
-        AND ano = YEAR(:hoje)
+        AND mes = :mes_atual
     ");
-    $stmt->execute(['salao_id' => $salao_id, 'hoje' => $hoje]);
+    $mes_atual = date('Y-m');
+    $stmt->execute(['salao_id' => $salao_id, 'mes_atual' => $mes_atual]);
     $meta = $stmt->fetch(PDO::FETCH_ASSOC);
     
-    // Faturamento total do mês
+    // Número de agendamentos realizados no mês
     $stmt = $conn->prepare("
-        SELECT COALESCE(SUM(valor), 0) as total
+        SELECT COUNT(*) as total
         FROM agendamentos
         WHERE salao_id = :salao_id
-        AND DATE(data_hora) BETWEEN :primeiro_dia AND :ultimo_dia
-        AND status = 'Concluído'
+        AND data BETWEEN :primeiro_dia AND :ultimo_dia
+        AND status = 'realizado'
     ");
     $stmt->execute([
         'salao_id' => $salao_id,
         'primeiro_dia' => $primeiro_dia_mes,
         'ultimo_dia' => $ultimo_dia_mes
     ]);
-    $faturamento_mes = floatval($stmt->fetch(PDO::FETCH_ASSOC)['total']);
+    $agendamentos_realizados_mes = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
     // Calcula percentual da meta
-    $valor_meta = $meta ? floatval($meta['valor_meta']) : 0;
-    $meta_mensal = $valor_meta > 0 ? round(($faturamento_mes / $valor_meta) * 100) : 0;
+    $meta_cortes = $meta ? intval($meta['cortes_mes']) : 0;
+    $meta_mensal = $meta_cortes > 0 ? round(($agendamentos_realizados_mes / $meta_cortes) * 100) : 0;
 
     // Últimos agendamentos
     $stmt = $conn->prepare("
         SELECT 
             a.id,
-            c.nome as cliente,
+            u.nome as cliente,
             s.nome as servico,
-            a.data_hora,
+            a.data,
+            a.hora,
             a.status
         FROM agendamentos a
-        JOIN clientes c ON c.id = a.cliente_id
+        JOIN usuarios u ON u.id = a.cliente_id
         JOIN servicos s ON s.id = a.servico_id
         WHERE a.salao_id = :salao_id
-        ORDER BY a.data_hora DESC
+        ORDER BY a.data DESC, a.hora DESC
         LIMIT 5
     ");
     $stmt->execute(['salao_id' => $salao_id]);
@@ -103,8 +105,12 @@ try {
 
     // Formata os últimos agendamentos
     foreach ($ultimos_agendamentos as &$agendamento) {
-        $data = new DateTime($agendamento['data_hora']);
+        $data_hora = $agendamento['data'] . ' ' . $agendamento['hora'];
+        $data = new DateTime($data_hora);
         $agendamento['data_hora'] = $data->format('d/m/Y H:i');
+        // Remove campos separados após formatação
+        unset($agendamento['data']);
+        unset($agendamento['hora']);
     }
 
     // Faturamento semanal
@@ -112,11 +118,12 @@ try {
     for ($i = 6; $i >= 0; $i--) {
         $data = date('Y-m-d', strtotime("-$i days"));
         $stmt = $conn->prepare("
-            SELECT COALESCE(SUM(valor), 0) as total
-            FROM agendamentos
-            WHERE salao_id = :salao_id
-            AND DATE(data_hora) = :data
-            AND status = 'Concluído'
+            SELECT COALESCE(SUM(s.preco), 0) as total
+            FROM agendamentos a
+            JOIN servicos s ON s.id = a.servico_id
+            WHERE a.salao_id = :salao_id
+            AND a.data = :data
+            AND a.status = 'realizado'
         ");
         $stmt->execute(['salao_id' => $salao_id, 'data' => $data]);
         $valor = floatval($stmt->fetch(PDO::FETCH_ASSOC)['total']);

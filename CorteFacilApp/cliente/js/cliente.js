@@ -14,19 +14,66 @@ var errorModal;
 
 // Inicializar modais quando o DOM estiver carregado
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM carregado, inicializando aplicação...');
+    
+    // Verificar se os elementos necessários existem
+    const loadingModalElement = document.getElementById('loadingModal');
+    const successModalElement = document.getElementById('successModal');
+    const errorModalElement = document.getElementById('errorModal');
+    const agendamentoModalElement = document.getElementById('agendamentoModal');
+    const saloesList = document.getElementById('saloesList');
+    
+    console.log('Elementos encontrados:', {
+        loadingModal: !!loadingModalElement,
+        successModal: !!successModalElement,
+        errorModal: !!errorModalElement,
+        agendamentoModal: !!agendamentoModalElement,
+        saloesList: !!saloesList
+    });
+    
     // Inicializar modais
-    loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
-    successModal = new bootstrap.Modal(document.getElementById('successModal'));
-    errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
-    agendamentoModal = new bootstrap.Modal(document.getElementById('agendamentoModal'));
+    if (loadingModalElement) loadingModal = new bootstrap.Modal(loadingModalElement);
+    if (successModalElement) successModal = new bootstrap.Modal(successModalElement);
+    if (errorModalElement) errorModal = new bootstrap.Modal(errorModalElement);
+    if (agendamentoModalElement) agendamentoModal = new bootstrap.Modal(agendamentoModalElement);
 
     // Carregar salões ao iniciar
-    loadSaloes();
+    if (saloesList) {
+        loadSaloes();
+    } else {
+        console.error('Elemento saloesList não encontrado no DOM!');
+    }
 
     // Configurar eventos dos botões do modal
-    document.getElementById('btnVoltar').addEventListener('click', voltarEtapa);
-    document.getElementById('btnAvancar').addEventListener('click', avancarEtapa);
-    document.getElementById('btnConfirmar').addEventListener('click', confirmarAgendamento);
+    const btnVoltar = document.getElementById('btnVoltar');
+    const btnAvancar = document.getElementById('btnAvancar');
+    const btnConfirmar = document.getElementById('btnConfirmar');
+    
+    if (btnVoltar) btnVoltar.addEventListener('click', voltarEtapa);
+    if (btnAvancar) btnAvancar.addEventListener('click', avancarEtapa);
+    if (btnConfirmar) btnConfirmar.addEventListener('click', confirmarAgendamento);
+
+    // Configurar eventos dos links da navbar
+    const meusAgendamentosLink = document.getElementById('meusAgendamentosLink');
+    const novoAgendamentoLink = document.getElementById('novoAgendamentoLink');
+    
+    if (meusAgendamentosLink) {
+        meusAgendamentosLink.addEventListener('click', (e) => {
+            console.log('Link Meus Agendamentos clicado');
+            e.preventDefault();
+            showSection('meusAgendamentosSection');
+            loadMeusAgendamentos();
+        });
+    } else {
+        console.log('Link meusAgendamentosLink não encontrado');
+    }
+    
+    if (novoAgendamentoLink) {
+        novoAgendamentoLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showSection('saloesSection');
+        });
+    }
 
     // Evento para resetar o modal quando for fechado
     document.getElementById('agendamentoModal').addEventListener('hidden.bs.modal', resetarModal);
@@ -73,17 +120,34 @@ function hideLoading() {
 
 // Função para mostrar/esconder seções
 function showSection(sectionId) {
+    console.log('Mostrando seção:', sectionId);
+    
+    // Lista de todas as seções que devem ser escondidas
+    const sections = [
+        'saloesSection', 'servicosSection', 'profissionaisSection',
+        'dataSection', 'horarioSection', 'resumoSection',
+        'meusAgendamentosSection'
+    ];
+    
     // Esconder todas as seções
-    document.querySelectorAll('.container > div').forEach(div => {
-        if (div && div.style) {
-            div.style.display = 'none';
+    sections.forEach(id => {
+        const section = document.getElementById(id);
+        if (section) {
+            section.style.display = 'none';
         }
     });
     
+    // Esconder o banner se não for a seção de salões
+    const banner = document.querySelector('.banner');
+    if (banner) {
+        banner.style.display = sectionId === 'saloesSection' ? 'block' : 'none';
+    }
+    
     // Mostrar a seção solicitada
     const targetSection = document.getElementById(sectionId);
-    if (targetSection && targetSection.style) {
+    if (targetSection) {
         targetSection.style.display = 'block';
+        console.log('Seção exibida com sucesso:', sectionId);
     } else {
         console.error(`Seção não encontrada: ${sectionId}`);
     }
@@ -94,6 +158,7 @@ async function loadSaloes() {
     try {
         console.log('Iniciando carregamento de salões...');
         showLoading();
+        console.log('Fazendo requisição para listar_saloes.php...');
         const response = await fetch('../php/listar_saloes.php');
         
         console.log('Response status:', response.status);
@@ -104,66 +169,105 @@ async function loadSaloes() {
         
         const data = await response.json();
         console.log('Dados recebidos:', data);
+        console.log('Status da resposta:', data.status);
+        console.log('Número de salões recebidos:', data.saloes ? data.saloes.length : 0);
 
         if (data.status !== 'success') {
+            console.error('Status da resposta não é success:', data.status);
             throw new Error(data.message || 'Erro ao carregar salões');
         }
+        console.log('Status da resposta é success, continuando...');
 
         const saloesContainer = document.getElementById('saloesList');
         console.log('Container encontrado:', saloesContainer);
+        console.log('Container existe:', saloesContainer ? 'Sim' : 'Não');
         console.log('Número de salões:', data.saloes.length);
+        
+        if (!saloesContainer) {
+            console.error('Container saloesList não encontrado!');
+            hideLoading();
+            return;
+        }
         
         if (data.saloes.length === 0) {
             saloesContainer.innerHTML = '<div class="col-12"><p class="text-center">Nenhum salão disponível no momento.</p></div>';
             hideLoading();
             return;
         }
-        saloesContainer.innerHTML = data.saloes.map(salao => {
-            // Gerar estrelas de avaliação
-            const avaliacao = parseFloat(salao.avaliacao) || 0;
-            const estrelasHtml = gerarEstrelas(avaliacao);
-            
-            // Formatar endereço
-            const endereco = formatarEndereco(salao);
-            
-            // Imagem padrão se não houver
-            const imagemUrl = salao.imagem_url || 'https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=60';
-            
-            return `
-                <div class="col-md-4 col-sm-6 mb-4 salao-item">
-                    <div class="salao-card">
-                        <div class="salao-img" style="background-image: url('${imagemUrl}');"></div>
-                        <div class="salao-info">
-                            <h5 class="salao-nome">${salao.nome}</h5>
-                            <div class="salao-avaliacao mb-2">
-                                ${estrelasHtml} <span class="text-muted small ms-1">(${avaliacao.toFixed(1)})</span>
+        
+        console.log('Gerando HTML dos salões...');
+        let saloesHtml = '';
+        try {
+            saloesHtml = data.saloes.map(salao => {
+                console.log('Processando salão:', salao.nome);
+                // Gerar estrelas de avaliação
+                const avaliacao = parseFloat(salao.avaliacao) || 0;
+                const estrelasHtml = gerarEstrelas(avaliacao);
+                
+                // Formatar endereço
+                const endereco = formatarEndereco(salao);
+                
+                // Imagem padrão se não houver
+                const imagemUrl = salao.imagem_url || 'https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=60';
+                
+                return `
+                    <div class="col-md-4 col-sm-6 mb-4 salao-item">
+                        <div class="salao-card">
+                            <div class="salao-img" style="background-image: url('${imagemUrl}');"></div>
+                            <div class="salao-info">
+                                <h5 class="salao-nome">${salao.nome}</h5>
+                                <div class="salao-avaliacao mb-2">
+                                    ${estrelasHtml} <span class="text-muted small ms-1">(${avaliacao.toFixed(1)})</span>
+                                </div>
+                                <p class="salao-endereco">
+                                    <i class="bi bi-geo-alt"></i> ${endereco}
+                                </p>
+                                <p class="salao-profissionais">
+                                    <i class="bi bi-clock"></i> ${salao.horario_abertura} - ${salao.horario_fechamento}
+                                </p>
+                                <p class="salao-profissionais">
+                                    <i class="bi bi-people"></i> ${salao.profissionais.length} profissionais disponíveis
+                                </p>
+                                <button class="btn btn-agendar w-100" onclick='selectSalao(${salao.id})'>
+                                    Agendar Agora
+                                </button>
                             </div>
-                            <p class="salao-endereco">
-                                <i class="bi bi-geo-alt"></i> ${endereco}
-                            </p>
-                            <p class="salao-profissionais">
-                                <i class="bi bi-clock"></i> ${salao.horario_abertura} - ${salao.horario_fechamento}
-                            </p>
-                            <p class="salao-profissionais">
-                                <i class="bi bi-people"></i> ${salao.profissionais.length} profissionais disponíveis
-                            </p>
-                            <button class="btn btn-agendar w-100" onclick="selectSalao(${salao.id})">
-                                Agendar Agora
-                            </button>
                         </div>
                     </div>
-                </div>
-            `;
-        }).join('');
+                `;
+            }).join('');
+            console.log('HTML gerado com sucesso, tamanho:', saloesHtml.length);
+        } catch (error) {
+            console.error('Erro ao gerar HTML dos salões:', error);
+            saloesHtml = '<div class="col-12"><p class="text-center">Erro ao processar salões. Por favor, tente novamente.</p></div>';
+        }
+        
+        console.log('HTML gerado, inserindo no container...');
+        try {
+            if (saloesContainer) {
+                saloesContainer.innerHTML = saloesHtml;
+                console.log('HTML inserido com sucesso!');
+            } else {
+                console.error('Container saloesList não encontrado para inserir HTML!');
+                throw new Error('Container saloesList não encontrado');
+            }
+        } catch (error) {
+            console.error('Erro ao inserir HTML no container:', error);
+        }
         
         // Inicializar pesquisa
-        document.getElementById('searchSalao').addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-            filterSaloes(searchTerm);
-        });
+        const searchElement = document.getElementById('searchSalao');
+        if (searchElement) {
+            searchElement.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                filterSaloes(searchTerm);
+            });
+        }
         
         hideLoading();
+        console.log('Carregamento de salões concluído!');
     } catch (error) {
+        console.error('Erro no carregamento de salões:', error);
         hideLoading();
         showError(error.message);
     }
@@ -502,6 +606,10 @@ function updateResumo() {
         <h4>Resumo do Agendamento</h4>
         <p><strong>Data:</strong> ${formattedDate}</p>
         <p><strong>Horário:</strong> ${selectedHorario}</p>
+        <p><strong>Valor:</strong> R$ 0,99</p>
+        <div class="alert alert-info mb-3">
+            <small><strong>Observação:</strong> Este valor refere-se apenas à taxa de agendamento. O pagamento do serviço será realizado diretamente no salão.</small>
+        </div>
         <button class="btn btn-primary w-100" onclick="confirmarAgendamento()">
             Confirmar Agendamento
         </button>
@@ -567,6 +675,9 @@ async function confirmarAgendamento() {
             <div class="text-center">
                 <h5>Pagamento via PIX</h5>
                 <p>Valor: R$ ${pixData.valor.toFixed(2)}</p>
+                <div class="alert alert-info mb-3">
+                    <strong>Observação:</strong> Este valor refere-se apenas à taxa de agendamento. O pagamento do serviço será realizado diretamente no salão.
+                </div>
                 <img src="data:image/png;base64,${pixData.qr_code_base64}" alt="QR Code PIX" style="max-width: 200px;">
                 <p class="mt-2">Escaneie o QR Code acima com seu aplicativo de pagamento</p>
                 <div class="input-group mb-3">
@@ -617,6 +728,7 @@ async function confirmarAgendamento() {
                     setTimeout(() => {
                         paymentModal.hide();
                         fecharModal('paymentModal');
+                        fecharModal('agendamentoModal');
                         showSection('meusAgendamentosSection');
                         loadMeusAgendamentos();
                     }, 2000);
@@ -643,15 +755,20 @@ async function confirmarAgendamento() {
 
 // Função para carregar meus agendamentos
 async function loadMeusAgendamentos() {
+    console.log('loadMeusAgendamentos chamada');
     try {
+        console.log('Fazendo fetch para historico_agendamentos.php');
         const response = await fetch('../php/historico_agendamentos.php');
+        console.log('Response status:', response.status);
         const data = await response.json();
+        console.log('Data recebida:', data);
 
         if (data.status === 'error') {
             throw new Error(data.message || 'Erro ao carregar agendamentos');
         }
 
         const agendamentosContainer = document.getElementById('agendamentosList');
+        console.log('Container encontrado:', agendamentosContainer);
         agendamentosContainer.innerHTML = data.agendamentos.map(agendamento => {
             const statusClass = {
                 'pendente': 'status-pendente',
@@ -727,7 +844,7 @@ async function cancelarAgendamento(agendamentoId) {
         hideLoading();
 
         if (!data.success) {
-            throw new Error(data.message || 'Erro ao cancelar agendamento');
+            throw new Error(data.error || 'Erro ao cancelar agendamento');
         }
 
         showSuccess('Agendamento cancelado com sucesso!');
@@ -738,8 +855,8 @@ async function cancelarAgendamento(agendamentoId) {
     }
 }
 
-// Função para filtrar salões
-function filterSaloes(searchTerm) {
+// Função para filtrar salões por cards
+function filterSaloesCards(searchTerm) {
     const cards = document.querySelectorAll('#saloesList .col-md-4');
     const term = searchTerm.toLowerCase();
 
@@ -993,7 +1110,10 @@ function updateModalResumo() {
             <strong>Horário:</strong> ${selectedHorario}
         </div>
         <div class="mb-3">
-            <strong>Valor:</strong> ${document.querySelector('.service-card.selected .card-text').textContent}
+            <strong>Valor:</strong> R$ 0,99
+        </div>
+        <div class="alert alert-info mb-3">
+            <small><strong>Observação:</strong> Este valor refere-se apenas à taxa de agendamento. O pagamento do serviço será realizado diretamente no salão.</small>
         </div>
     `;
 }

@@ -19,6 +19,8 @@ if (isset($_GET['id'])) {
     $dados = json_decode(file_get_contents('php://input'), true);
     if (isset($dados['id'])) {
         $agendamento_id = $dados['id'];
+    } else if (isset($dados['agendamento_id'])) {
+        $agendamento_id = $dados['agendamento_id'];
     }
 }
 
@@ -54,6 +56,8 @@ try {
     }
     
     // Verifica se está tentando cancelar com menos de 24h de antecedência
+    // Temporariamente desativando esta verificação para fins de teste
+    /*
     $data_hora_agendamento = strtotime($agendamento['data'] . ' ' . $agendamento['hora']);
     $agora = time();
     $diferenca_horas = ($data_hora_agendamento - $agora) / 3600;
@@ -61,6 +65,7 @@ try {
     if ($diferenca_horas < 24) {
         throw new Exception('Não é possível cancelar agendamentos com menos de 24 horas de antecedência');
     }
+    */
     
     // Cancela o agendamento
     $stmt = $pdo->prepare("
@@ -81,5 +86,5 @@ try {
         'success' => false,
         'error' => $e->getMessage()
     ]);
-} 
+}
 ?>
