@@ -43,7 +43,7 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_type']) || $_SESSION[
     error_log('Tentativa de acesso não autorizado à área administrativa: ' . $_SERVER['REQUEST_URI']);
     
     // Redireciona para a página de login do administrador
-    header('Location: /CorteFacilApp/admin_login.html');
+    header('Location: ../admin_login.html');
     exit;
 }
 ?>

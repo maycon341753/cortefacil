@@ -1,0 +1,17 @@
+CREDENCIAIS DO ADMINISTRADOR
+============================
+
+Email: mayconreis2030@gmail.com
+Senha: Brava1997
+
+URL de Login: http://localhost:8000/admin_login.html
+
+INSTRUÇÕES:
+1. Certifique-se de que o servidor PHP está rodando na porta 8000
+2. Use as credenciais acima para fazer login
+3. Após o login, você será redirecionado para o painel administrativo
+
+PROBLEMAS CORRIGIDOS:
+- URLs corrigidas para usar caminhos relativos
+- Headers CORS ajustados
+- Redirecionamento de verificação de admin corrigido

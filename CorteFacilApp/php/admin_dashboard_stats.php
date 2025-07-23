@@ -61,10 +61,12 @@ try {
         error_log("Tabela saloes não existe!");
     }
 
-    // Agendamentos hoje (apenas pagos)
+    // Agendamentos pagos hoje (de todos os salões)
     $checkTable = $conn->query("SHOW TABLES LIKE 'agendamentos'")->fetchColumn();
     if ($checkTable > 0) {
         $hoje = date('Y-m-d');
+        
+        // Contar agendamentos pagos hoje de todos os salões
         $query = "SELECT COUNT(*) as total FROM agendamentos WHERE data = :hoje AND status_pagamento = 'pago'";
         $stmt = $conn->prepare($query);
         $stmt->bindParam(':hoje', $hoje, PDO::PARAM_STR);
@@ -72,7 +74,7 @@ try {
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         $stats['agendamentosHoje'] = (int)$row['total'];
         
-        // Valor dos agendamentos de hoje (apenas pagos)
+        // Valor das taxas de serviço pagas hoje (0,99 por agendamento)
         $query = "SELECT SUM(taxa_servico) as total FROM agendamentos 
                  WHERE data = :hoje AND status_pagamento = 'pago'";
         $stmt = $conn->prepare($query);
@@ -81,41 +83,54 @@ try {
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         $valorHoje = $row['total'] ?? 0;
         $stats['valorAgendamentosHoje'] = 'R$ ' . number_format($valorHoje, 2, ',', '.');
+        
+        error_log("Agendamentos pagos hoje: " . $stats['agendamentosHoje'] . " - Taxa de serviço: " . $stats['valorAgendamentosHoje']);
     } else {
         error_log("Tabela agendamentos não existe");
     }
 
-    // Promoções ativas
-    $checkTable = $conn->query("SHOW TABLES LIKE 'promocoes'")->fetchColumn();
+    // Cupons disponíveis (Promoções Ativas)
+    $checkTable = $conn->query("SHOW TABLES LIKE 'cupons'")->fetchColumn();
     if ($checkTable > 0) {
         try {
-            $query = "SELECT COUNT(*) as total FROM promocoes WHERE status = 'ativa' AND data_fim >= CURDATE()";
+            // Primeiro atualiza cupons expirados
+            $updateQuery = "UPDATE cupons SET status = 'expirado' WHERE status = 'disponivel' AND data_expiracao < CURDATE()";
+            $conn->exec($updateQuery);
+            
+            // Conta cupons disponíveis (não expirados e não utilizados)
+            $query = "SELECT COUNT(*) as total FROM cupons WHERE status = 'disponivel' AND data_expiracao >= CURDATE()";
             $stmt = $conn->query($query);
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
             $stats['promocoesAtivas'] = (int)$row['total'];
+            
+            error_log("Cupons disponíveis encontrados: " . $stats['promocoesAtivas']);
         } catch (Exception $e) {
-            // A tabela promocoes pode existir mas ter estrutura diferente
-            error_log("Erro ao consultar promoções: " . $e->getMessage());
+            // A tabela cupons pode existir mas ter estrutura diferente
+            error_log("Erro ao consultar cupons: " . $e->getMessage());
             $stats['promocoesAtivas'] = 0;
         }
     } else {
-        error_log("Tabela promocoes não existe");
+        error_log("Tabela cupons não existe");
     }
 
-    // Faturamento mensal (apenas agendamentos pagos do mês atual)
+    // Faturamento mensal em taxas de serviço (últimos 30 dias - R$ 0,99 por agendamento pago)
     $checkTable = $conn->query("SHOW TABLES LIKE 'agendamentos'")->fetchColumn();
     if ($checkTable > 0) {
-        $primeiroDiaMes = date('Y-m-01');
-        $ultimoDiaMes = date('Y-m-t');
+        // Calcular data de 30 dias atrás
+        $dataInicio = date('Y-m-d', strtotime('-30 days'));
+        $dataFim = date('Y-m-d');
+        
         $query = "SELECT SUM(taxa_servico) as total FROM agendamentos 
-                 WHERE data BETWEEN :primeiro_dia AND :ultimo_dia AND status_pagamento = 'pago'";
+                 WHERE data BETWEEN :data_inicio AND :data_fim AND status_pagamento = 'pago'";
         $stmt = $conn->prepare($query);
-        $stmt->bindParam(':primeiro_dia', $primeiroDiaMes, PDO::PARAM_STR);
-        $stmt->bindParam(':ultimo_dia', $ultimoDiaMes, PDO::PARAM_STR);
+        $stmt->bindParam(':data_inicio', $dataInicio, PDO::PARAM_STR);
+        $stmt->bindParam(':data_fim', $dataFim, PDO::PARAM_STR);
         $stmt->execute();
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         $faturamento = $row['total'] ?? 0;
         $stats['faturamentoMensal'] = 'R$ ' . number_format($faturamento, 2, ',', '.');
+        
+        error_log("Faturamento em taxas de serviço dos últimos 30 dias (de $dataInicio a $dataFim): " . $stats['faturamentoMensal']);
     }
 
     error_log("Estatísticas finais: " . json_encode($stats));
