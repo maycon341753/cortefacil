@@ -23,7 +23,7 @@ try {
     $stmtLimpeza = $pdo->prepare($sqlLimpeza);
     $stmtLimpeza->execute(['data_limite' => $dataLimite]);
     
-    // Buscar agendamentos confirmados do cliente
+    // Buscar agendamentos do cliente (confirmados, pagos e realizados)
     $sql = "SELECT 
                 a.id,
                 a.data,
@@ -39,7 +39,7 @@ try {
             JOIN profissionais p ON a.profissional_id = p.id
             JOIN servicos serv ON a.servico_id = serv.id
             WHERE a.cliente_id = :cliente_id 
-            AND a.status = 'confirmado'
+            AND a.status IN ('confirmado', 'pago', 'realizado')
             ORDER BY a.criado_em DESC";
 
     $stmt = $pdo->prepare($sql);
