@@ -55,29 +55,26 @@ function sincronizarProfissional($conn, $funcionario_id, $acao = 'inserir') {
                 // Atualiza o profissional existente
                 $sql = "UPDATE profissionais SET 
                         nome = ?, 
-                        especialidade = ?, 
                         telefone = ?, 
                         ativo = ? 
                         WHERE funcionario_id = ?";
                 $stmt = $conn->prepare($sql);
                 $stmt->execute([
                     $funcionario['nome'],
-                    $funcionario['especialidade'],
                     $funcionario['telefone'],
-                    $funcionario['ativo'],
+                    $funcionario['ativo'] ?? 1,
                     $funcionario_id
                 ]);
             } else {
                 // Insere novo profissional
-                $sql = "INSERT INTO profissionais (nome, salao_id, especialidade, telefone, ativo, funcionario_id) 
-                        VALUES (?, ?, ?, ?, ?, ?)";
+                $sql = "INSERT INTO profissionais (nome, salao_id, telefone, ativo, funcionario_id) 
+                        VALUES (?, ?, ?, ?, ?)";
                 $stmt = $conn->prepare($sql);
                 $stmt->execute([
                     $funcionario['nome'],
-                    $funcionario['salao_id'],
-                    $funcionario['especialidade'],
+                    $_SESSION['salao_id'],
                     $funcionario['telefone'],
-                    $funcionario['ativo'],
+                    $funcionario['ativo'] ?? 1,
                     $funcionario_id
                 ]);
             }
@@ -99,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     try {
         $salao_id = $_SESSION['salao_id'];
         
-        $sql = "SELECT id, nome, email, telefone, especialidade, valor_servico, ativo, horario_trabalho_inicio, horario_trabalho_fim, dias_trabalho 
+        $sql = "SELECT id, nome, email, telefone, horario_trabalho_inicio, horario_trabalho_fim, dias_trabalho 
                 FROM funcionarios 
                 WHERE salao_id = ?";
         $stmt = $conn->prepare($sql);
@@ -138,8 +135,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit;
             }
             
-            $sql = "INSERT INTO funcionarios (nome, email, senha, telefone, salao_id, especialidade, valor_servico, horario_trabalho_inicio, horario_trabalho_fim, dias_trabalho) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";;
+            $sql = "INSERT INTO funcionarios (nome, email, senha, telefone, salao_id, horario_trabalho_inicio, horario_trabalho_fim, dias_trabalho) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)";;
             $stmt = $conn->prepare($sql);
             $stmt->execute([
                 $dados['nome'],
@@ -147,8 +144,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 password_hash($dados['senha'], PASSWORD_DEFAULT),
                 $dados['telefone'] ?? null,
                 $_SESSION['salao_id'],
-                $dados['especialidade'] ?? null,
-                $dados['valor_servico'] ?? 0.00,
                 $dados['horario_trabalho_inicio'] ?? '09:00',
                 $dados['horario_trabalho_fim'] ?? '18:00',
                 $dados['dias_trabalho'] ?? '1,2,3,4,5,6'
@@ -192,16 +187,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (isset($dados['telefone'])) {
                 $campos[] = 'telefone = ?';
                 $valores[] = $dados['telefone'];
-            }
-            
-            if (isset($dados['especialidade'])) {
-                $campos[] = 'especialidade = ?';
-                $valores[] = $dados['especialidade'];
-            }
-            
-            if (isset($dados['valor_servico'])) {
-                $campos[] = 'valor_servico = ?';
-                $valores[] = $dados['valor_servico'];
             }
             
             if (isset($dados['ativo'])) {
