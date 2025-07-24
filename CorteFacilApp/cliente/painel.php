@@ -1051,18 +1051,7 @@ try {
         <!-- Seção de Meus Agendamentos -->
         <div id="meusAgendamentosSection" style="display: none;">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="mb-0">Meus Agendamentos</h2>
-                <div class="d-flex align-items-center">
-                    <span class="text-muted me-3" id="agendamentosInfo">Mostrando 0 de 0 agendamentos</span>
-                    <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnPrevPage" disabled>
-                            <i class="bi bi-chevron-left"></i> Anterior
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnNextPage" disabled>
-                            Próxima <i class="bi bi-chevron-right"></i>
-                        </button>
-                    </div>
-                </div>
+                <h2 class="mb-0">Agendamentos</h2>
             </div>
             <div class="row" id="agendamentosList"></div>
             <div class="d-flex justify-content-center mt-4" id="paginationContainer" style="display: none;">
