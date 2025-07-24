@@ -95,6 +95,13 @@ document.addEventListener('DOMContentLoaded', () => {
             resetarModal();
         }
     });
+
+    // Inicializar bottom tab navigation
+    initBottomTabNavigation();
+    syncBottomTabsWithMainNav();
+    
+    // Definir tab ativo inicial (Novo Agendamento)
+    updateBottomTabActive('bottomNovoAgendamento');
 });
 
 function fecharModal(id){
@@ -966,8 +973,8 @@ let totalAgendamentos = [];
 async function loadMeusAgendamentos() {
     console.log('loadMeusAgendamentos chamada');
     try {
-        console.log('Fazendo fetch para historico_agendamentos.php');
-        const response = await fetch('../php/historico_agendamentos.php');
+        console.log('Fazendo fetch para meus_agendamentos.php');
+        const response = await fetch('../php/meus_agendamentos.php');
         console.log('Response status:', response.status);
         const data = await response.json();
         console.log('Data recebida:', data);
@@ -976,8 +983,8 @@ async function loadMeusAgendamentos() {
             throw new Error(data.message || 'Erro ao carregar agendamentos');
         }
 
-        // Armazenar todos os agendamentos
-        totalAgendamentos = data.agendamentos || [];
+        // Armazenar todos os agendamentos (usando 'data' ao invés de 'agendamentos')
+        totalAgendamentos = data.data || [];
         
         // Resetar para primeira página
         currentPage = 1;
@@ -986,6 +993,7 @@ async function loadMeusAgendamentos() {
         renderAgendamentosPaginados();
         
     } catch (error) {
+        console.error('Erro ao carregar agendamentos:', error);
         const agendamentosContainer = document.getElementById('agendamentosList');
         agendamentosContainer.innerHTML = `
             <div class="col-12">
@@ -1038,9 +1046,9 @@ function renderAgendamentosPaginados() {
                             <i class="bi bi-person"></i> ${agendamento.profissional}<br>
                             <i class="bi bi-calendar-event"></i> ${agendamento.data}<br>
                             <i class="bi bi-clock"></i> ${agendamento.hora}<br>
-                            <i class="bi bi-currency-dollar"></i> R$ ${agendamento.valor}
+                            <i class="bi bi-currency-dollar"></i> ${agendamento.preco}
                         </p>
-                        ${agendamento.status === 'pendente' ? `
+                        ${agendamento.status === 'confirmado' || agendamento.status === 'pago' ? `
                             <button class="btn btn-outline-danger w-100" onclick="cancelarAgendamento(${agendamento.id})">
                                 <i class="bi bi-x-circle"></i> Cancelar Agendamento
                             </button>
@@ -1500,4 +1508,165 @@ async function realizarLogout() {
         hideLoading();
         showError('Erro ao realizar logout: ' + error.message);
     }
+}
+
+// ===== BOTTOM TAB NAVIGATION =====
+
+// Função para criar efeito ripple
+function createRippleEffect(element, event) {
+    const ripple = document.createElement('span');
+    const rect = element.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    const x = event.clientX - rect.left - size / 2;
+    const y = event.clientY - rect.top - size / 2;
+    
+    ripple.style.width = ripple.style.height = size + 'px';
+    ripple.style.left = x + 'px';
+    ripple.style.top = y + 'px';
+    ripple.classList.add('ripple-effect');
+    
+    element.appendChild(ripple);
+    
+    // Remove ripple after animation
+    setTimeout(() => {
+        ripple.remove();
+    }, 600);
+}
+
+// Função para atualizar tab ativo no bottom navigation
+function updateBottomTabActive(activeTabId) {
+    // Remove active de todos os tabs
+    document.querySelectorAll('.bottom-tab-link').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Adiciona active ao tab selecionado
+    const activeTab = document.getElementById(activeTabId);
+    if (activeTab) {
+        activeTab.classList.add('active');
+        
+        // Adicionar animação de bounce no ícone
+        const icon = activeTab.querySelector('.bottom-tab-icon');
+        if (icon) {
+            icon.style.animation = 'bounce 0.6s ease';
+            setTimeout(() => {
+                icon.style.animation = '';
+            }, 600);
+        }
+    }
+}
+
+// Função para mostrar busca mobile
+function showMobileBusca() {
+    const searchInput = document.getElementById('searchSalao');
+    if (searchInput) {
+        searchInput.focus();
+        // Scroll para o topo para mostrar a barra de busca
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+}
+
+// Função para atualizar badge de agendamentos
+function updateAgendamentosBadge(count) {
+    const badge = document.getElementById('agendamentosBadge');
+    if (badge) {
+        if (count > 0) {
+            badge.textContent = count > 99 ? '99+' : count.toString();
+            badge.style.display = 'flex';
+            // Animação de pulse para chamar atenção
+            badge.style.animation = 'pulse 2s infinite';
+        } else {
+            badge.style.display = 'none';
+            badge.style.animation = '';
+        }
+    }
+}
+
+// Inicializar bottom tab navigation
+function initBottomTabNavigation() {
+    // Bottom Novo Agendamento
+    const bottomNovoAgendamento = document.getElementById('bottomNovoAgendamento');
+    if (bottomNovoAgendamento) {
+        bottomNovoAgendamento.addEventListener('click', function(e) {
+            e.preventDefault();
+            createRippleEffect(this, e);
+            updateBottomTabActive('bottomNovoAgendamento');
+            
+            // Mesmo comportamento do link do header
+            const novoAgendamentoLink = document.getElementById('novoAgendamentoLink');
+            if (novoAgendamentoLink) {
+                novoAgendamentoLink.click();
+            }
+        });
+    }
+    
+    // Bottom Meus Agendamentos
+    const bottomMeusAgendamentos = document.getElementById('bottomMeusAgendamentos');
+    if (bottomMeusAgendamentos) {
+        bottomMeusAgendamentos.addEventListener('click', function(e) {
+            e.preventDefault();
+            createRippleEffect(this, e);
+            updateBottomTabActive('bottomMeusAgendamentos');
+            
+            // Mesmo comportamento do link do header
+            const meusAgendamentosLink = document.getElementById('meusAgendamentosLink');
+            if (meusAgendamentosLink) {
+                meusAgendamentosLink.click();
+            }
+        });
+    }
+    
+    // Bottom Buscar
+    const bottomBuscar = document.getElementById('bottomBuscar');
+    if (bottomBuscar) {
+        bottomBuscar.addEventListener('click', function(e) {
+            e.preventDefault();
+            createRippleEffect(this, e);
+            updateBottomTabActive('bottomBuscar');
+            showMobileBusca();
+        });
+    }
+    
+    // Bottom Perfil
+    const bottomPerfil = document.getElementById('bottomPerfil');
+    if (bottomPerfil) {
+        bottomPerfil.addEventListener('click', function(e) {
+            e.preventDefault();
+            createRippleEffect(this, e);
+            updateBottomTabActive('bottomPerfil');
+            
+            // Mesmo comportamento do dropdown de perfil
+            const perfilLink = document.getElementById('perfilLink');
+            if (perfilLink) {
+                perfilLink.click();
+            }
+        });
+    }
+}
+
+// Sincronizar bottom tabs com navegação principal
+function syncBottomTabsWithMainNav() {
+    // Observar mudanças nos links principais e atualizar bottom tabs
+    const novoAgendamentoLink = document.getElementById('novoAgendamentoLink');
+    const meusAgendamentosLink = document.getElementById('meusAgendamentosLink');
+    
+    if (novoAgendamentoLink) {
+        novoAgendamentoLink.addEventListener('click', function() {
+            updateBottomTabActive('bottomNovoAgendamento');
+        });
+    }
+    
+    if (meusAgendamentosLink) {
+        meusAgendamentosLink.addEventListener('click', function() {
+            updateBottomTabActive('bottomMeusAgendamentos');
+        });
+    }
+}
+
+// Atualizar badge quando carregar agendamentos
+function updateBadgeOnAgendamentosLoad() {
+    // Esta função será chamada quando os agendamentos forem carregados
+    // Por enquanto, vamos simular com um número
+    const agendamentosPendentes = document.querySelectorAll('.status-pendente').length;
+    updateAgendamentosBadge(agendamentosPendentes);
 }

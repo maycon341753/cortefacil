@@ -334,6 +334,155 @@ try {
             background-color: rgba(234, 29, 44, 0.05);
         }
         
+        /* Bottom Tab Navigation - Mobile Only */
+        .bottom-tab-navigation {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            display: none;
+            padding: 8px 0;
+        }
+        
+        .bottom-tab-nav {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+        
+        .bottom-tab-item {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .bottom-tab-link {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 4px;
+            text-decoration: none;
+            color: var(--dark-gray);
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .bottom-tab-link:hover {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        .bottom-tab-link.active {
+            color: var(--primary-color);
+            background-color: rgba(0, 161, 255, 0.1);
+        }
+        
+        .bottom-tab-icon {
+            font-size: 1.2rem;
+            margin-bottom: 2px;
+            transition: transform 0.3s ease;
+        }
+        
+        .bottom-tab-text {
+            font-size: 0.7rem;
+            font-weight: 500;
+            line-height: 1;
+        }
+        
+        .bottom-tab-link.active .bottom-tab-icon {
+            transform: scale(1.1);
+        }
+        
+        /* Ripple effect */
+        .bottom-tab-link::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(0, 161, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s ease, height 0.3s ease;
+        }
+        
+        .bottom-tab-link:active::before {
+            width: 40px;
+            height: 40px;
+        }
+        
+        /* Badge for notifications */
+        .bottom-tab-badge {
+            position: absolute;
+            top: 2px;
+            right: 8px;
+            background: #ff4757;
+            color: white;
+            border-radius: 10px;
+            padding: 2px 6px;
+            font-size: 0.6rem;
+            font-weight: 600;
+            min-width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Ripple effect styles */
+        .ripple-effect {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(0, 161, 255, 0.4);
+            transform: scale(0);
+            animation: ripple 0.6s linear;
+            pointer-events: none;
+        }
+
+        /* Animations */
+        @keyframes ripple {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 53%, 80%, 100% {
+                transform: translate3d(0, 0, 0);
+            }
+            40%, 43% {
+                transform: translate3d(0, -8px, 0);
+            }
+            70% {
+                transform: translate3d(0, -4px, 0);
+            }
+            90% {
+                transform: translate3d(0, -2px, 0);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
         /* Responsividade */
         @media (max-width: 768px) {
             .banner {
@@ -346,6 +495,33 @@ try {
             
             .banner p {
                 font-size: 1rem;
+            }
+            
+            /* Show bottom navigation on mobile */
+            .bottom-tab-navigation {
+                display: block;
+            }
+            
+            /* Add bottom padding to body to prevent content overlap */
+            body {
+                padding-bottom: 70px;
+            }
+            
+            /* Hide navbar on mobile when bottom nav is active */
+            .navbar-nav {
+                display: none !important;
+            }
+            
+            /* Adjust search bar on mobile */
+            .navbar .d-flex {
+                flex-direction: column;
+                align-items: stretch;
+                width: 100%;
+            }
+            
+            .navbar .input-group {
+                margin-bottom: 10px;
+                margin-right: 0 !important;
             }
         }
 
@@ -945,6 +1121,37 @@ try {
             </div>
         </div>
     </footer>
+
+    <!-- Bottom Tab Navigation - Mobile Only -->
+    <nav class="bottom-tab-navigation">
+        <ul class="bottom-tab-nav">
+            <li class="bottom-tab-item">
+                <a href="#" class="bottom-tab-link active" id="bottomNovoAgendamento">
+                    <i class="bi bi-calendar-plus bottom-tab-icon"></i>
+                    <span class="bottom-tab-text">Agendar</span>
+                </a>
+            </li>
+            <li class="bottom-tab-item">
+                <a href="#" class="bottom-tab-link" id="bottomMeusAgendamentos">
+                    <i class="bi bi-calendar-check bottom-tab-icon"></i>
+                    <span class="bottom-tab-text">Agendamentos</span>
+                    <span class="bottom-tab-badge" id="agendamentosBadge" style="display: none;">0</span>
+                </a>
+            </li>
+            <li class="bottom-tab-item">
+                <a href="#" class="bottom-tab-link" id="bottomBuscar">
+                    <i class="bi bi-search bottom-tab-icon"></i>
+                    <span class="bottom-tab-text">Buscar</span>
+                </a>
+            </li>
+            <li class="bottom-tab-item">
+                <a href="#" class="bottom-tab-link" id="bottomPerfil">
+                    <i class="bi bi-person-circle bottom-tab-icon"></i>
+                    <span class="bottom-tab-text">Perfil</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>

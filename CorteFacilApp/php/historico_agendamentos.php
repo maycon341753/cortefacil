@@ -20,15 +20,21 @@ try {
     $stmtLimpeza = $conn->prepare($sqlLimpeza);
     $stmtLimpeza->execute([$dataLimite]);
 
-    // Buscar agendamentos do usuário (apenas confirmados)
+    // Buscar TODOS os agendamentos do usuário (não apenas confirmados)
     $sql = "SELECT a.*, s.nome_fantasia as nome_salao, p.nome as nome_profissional, sv.nome as nome_servico 
     FROM agendamentos a 
     JOIN saloes s ON a.salao_id = s.id 
     JOIN profissionais p ON a.profissional_id = p.id 
     JOIN servicos sv ON a.servico_id = sv.id 
     WHERE a.cliente_id = ? 
-    AND a.status = 'confirmado'
-    ORDER BY a.criado_em DESC";
+    ORDER BY 
+        CASE 
+            WHEN a.status IN ('confirmado', 'pago') THEN 1
+            WHEN a.status = 'realizado' THEN 2
+            WHEN a.status = 'cancelado' THEN 3
+            ELSE 4
+        END,
+        a.criado_em DESC";
 
     $stmt = $conn->prepare($sql);
     $stmt->bindValue(1, $usuario_id, PDO::PARAM_INT);
