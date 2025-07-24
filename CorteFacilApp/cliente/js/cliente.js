@@ -86,7 +86,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Evento para resetar o modal quando for fechado
-    document.getElementById('agendamentoModal').addEventListener('hidden.bs.modal', resetarModal);
+    document.getElementById('agendamentoModal').addEventListener('hidden.bs.modal', function() {
+        // Só resetar se não estiver no processo de pagamento
+        const paymentModal = document.getElementById('paymentModal');
+        const isPaymentModalOpen = paymentModal && paymentModal.classList.contains('show');
+        
+        if (!isPaymentModalOpen) {
+            resetarModal();
+        }
+    });
 });
 
 function fecharModal(id){
@@ -800,6 +808,31 @@ function showConfirmacao() {
 // Função para confirmar agendamento
 async function confirmarAgendamento() {
     try {
+        // Verificar se todas as variáveis necessárias estão definidas
+        if (!selectedSalao) {
+            throw new Error('Salão não selecionado. Por favor, selecione um salão.');
+        }
+        if (!selectedServico) {
+            throw new Error('Serviço não selecionado. Por favor, selecione um serviço.');
+        }
+        if (!selectedProfissional) {
+            throw new Error('Profissional não selecionado. Por favor, selecione um profissional.');
+        }
+        if (!selectedData) {
+            throw new Error('Data não selecionada. Por favor, selecione uma data.');
+        }
+        if (!selectedHorario) {
+            throw new Error('Horário não selecionado. Por favor, selecione um horário.');
+        }
+        
+        console.log('Dados do agendamento:', {
+            salao_id: selectedSalao,
+            servico_id: selectedServico,
+            profissional_id: selectedProfissional,
+            data: selectedData,
+            hora: selectedHorario
+        });
+        
         showLoading();
         const formattedDate = selectedData.toISOString().split('T')[0];
         const response = await fetch('../php/agendar.php', {
@@ -898,6 +931,8 @@ async function confirmarAgendamento() {
                         paymentModal.hide();
                         fecharModal('paymentModal');
                         fecharModal('agendamentoModal');
+                        // Resetar variáveis após pagamento concluído
+                        resetarModal();
                         showSection('meusAgendamentosSection');
                         loadMeusAgendamentos();
                     }, 2000);
