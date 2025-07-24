@@ -320,6 +320,11 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['tipo']) || $_SESSION['tipo'] !=
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="servicos.php">
+                            <i class="bi bi-scissors me-1"></i>Serviços
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="funcionarios.php">
                             <i class="bi bi-people me-1"></i>Funcionários
                         </a>

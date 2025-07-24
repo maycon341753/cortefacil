@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste HTML</title>
+</head>
+<body>
+    <h1>Teste HTML Funcionando</h1>
+    <p>Se você está vendo isso, o servidor está funcionando.</p>
+    
+    <h2>Teste da API do Salão do Eduardo</h2>
+    <button onclick="testarAPI()">Testar API</button>
+    <div id="resultado"></div>
+    
+    <script>
+    function testarAPI() {
+        // Primeiro, vamos buscar o ID do salão do Eduardo
+        fetch('buscar_salao_eduardo.php')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const salaoId = data.salao_id;
+                    document.getElementById('resultado').innerHTML = 
+                        '<p>Salão do Eduardo encontrado (ID: ' + salaoId + ')</p>';
+                    
+                    // Agora testar a API de serviços
+                    return fetch('listar_servicos.php?salao_id=' + salaoId);
+                } else {
+                    throw new Error(data.message);
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    let html = '<h3>Serviços encontrados:</h3>';
+                    if (data.data.length === 0) {
+                        html += '<p style="color: red;">Nenhum serviço encontrado!</p>';
+                    } else {
+                        data.data.forEach(servico => {
+                            html += '<p>- ' + servico.nome + ' (' + servico.preco_formatado + ')</p>';
+                        });
+                    }
+                    document.getElementById('resultado').innerHTML += html;
+                } else {
+                    document.getElementById('resultado').innerHTML += 
+                        '<p style="color: red;">Erro na API: ' + data.message + '</p>';
+                }
+            })
+            .catch(error => {
+                document.getElementById('resultado').innerHTML = 
+                    '<p style="color: red;">Erro: ' + error.message + '</p>';
+            });
+    }
+    </script>
+</body>
+</html>

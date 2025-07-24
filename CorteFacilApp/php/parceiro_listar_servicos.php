@@ -13,19 +13,18 @@ if (!isset($_SESSION['id']) || $_SESSION['tipo'] !== 'salao') {
 
 try {
     $stmt = $conn->prepare("
-        SELECT id, nome, duracao_minutos, preco
+        SELECT id, nome, duracao_minutos, preco, descricao, ativo
         FROM servicos 
         WHERE salao_id = :salao_id 
-        AND ativo = 1
-        ORDER BY nome
+        ORDER BY ativo DESC, nome ASC
     ");
     
     $stmt->execute(['salao_id' => $_SESSION['salao_id']]);
     $servicos = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     echo json_encode([
-        'status' => 'success',
-        'servicos' => $servicos
+        'status' => 'sucesso',
+        'data' => $servicos
     ]);
 
 } catch (PDOException $e) {
@@ -36,4 +35,4 @@ try {
         'mensagem' => 'Erro ao listar serviços'
     ]);
 }
-?> 
+?>

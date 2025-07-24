@@ -22,11 +22,10 @@ if ($id <= 0) {
 
 try {
     $stmt = $conn->prepare("
-        SELECT id, nome, duracao_minutos, preco
+        SELECT id, nome, duracao_minutos, preco, descricao, ativo
         FROM servicos 
         WHERE id = :id 
-        AND salao_id = :salao_id 
-        AND ativo = 1
+        AND salao_id = :salao_id
     ");
     
     $stmt->execute([
@@ -38,8 +37,8 @@ try {
     
     if ($servico) {
         echo json_encode([
-            'status' => 'success',
-            'servico' => $servico
+            'status' => 'sucesso',
+            'data' => $servico
         ]);
     } else {
         http_response_code(404);
@@ -57,4 +56,4 @@ try {
         'mensagem' => 'Erro ao obter serviço'
     ]);
 }
-?> 
+?>

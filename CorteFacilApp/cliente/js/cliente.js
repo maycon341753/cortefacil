@@ -493,45 +493,83 @@ function hideAllSections() {
 
 // Função para carregar serviços do salão
 async function loadServicos(salaoId) {
+    console.log('=== INICIANDO CARREGAMENTO DE SERVIÇOS ===');
+    console.log('Salão ID:', salaoId);
+    
     try {
-        const response = await fetch(`../php/listar_servicos.php?salao_id=${salaoId}`);
+        const url = `../php/listar_servicos.php?salao_id=${salaoId}`;
+        console.log('URL da requisição:', url);
+        
+        const response = await fetch(url);
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
         
         if (!response.ok) {
             throw new Error(`Erro HTTP: ${response.status}`);
         }
         
-        const data = await response.json();
+        const responseText = await response.text();
+        console.log('Response text:', responseText);
+        
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (parseError) {
+            console.error('Erro ao fazer parse do JSON:', parseError);
+            console.error('Response text que causou erro:', responseText);
+            throw new Error('Resposta inválida do servidor');
+        }
+        
+        console.log('Dados recebidos:', data);
         
         if (data.status !== 'success') {
+            console.error('Status não é success:', data.status);
+            console.error('Mensagem de erro:', data.message);
             throw new Error(data.message || 'Erro ao carregar serviços');
         }
 
         const servicosContainer = document.getElementById('modalServicosList');
+        console.log('Container encontrado:', !!servicosContainer);
         
         if (!data.data || !Array.isArray(data.data) || data.data.length === 0) {
+            console.log('Nenhum serviço encontrado');
+            console.log('data.data:', data.data);
             servicosContainer.innerHTML = '<div class="col-12"><p class="text-center">Nenhum serviço disponível para este salão.</p></div>';
             return;
         }
 
-        servicosContainer.innerHTML = data.data.map(servico => `
-            <div class="col-md-4 mb-3">
-                <div class="card service-card h-100" onclick="selectServicoModal(${servico.id}, this)">
-                    <div class="card-body">
-                        <h5 class="card-title">${servico.nome}</h5>
-                        <p class="card-text">${servico.preco_formatado}</p>
-                        <p class="card-text">${servico.duracao_minutos} minutos</p>
+        console.log('Número de serviços encontrados:', data.data.length);
+        console.log('Serviços:', data.data);
+
+        const servicosHtml = data.data.map(servico => {
+            console.log('Processando serviço:', servico);
+            return `
+                <div class="col-md-4 mb-3">
+                    <div class="card service-card h-100" onclick="selectServicoModal(${servico.id}, this)">
+                        <div class="card-body">
+                            <h5 class="card-title">${servico.nome}</h5>
+                            <p class="card-text">${servico.preco_formatado}</p>
+                            <p class="card-text">${servico.duracao_minutos} minutos</p>
+                        </div>
                     </div>
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
+
+        console.log('HTML gerado:', servicosHtml);
+        servicosContainer.innerHTML = servicosHtml;
+        console.log('HTML inserido no container');
 
         fecharModal('loadingModal');
 
     } catch (error) {
-        console.error('Erro ao carregar serviços:', error);
+        console.error('=== ERRO AO CARREGAR SERVIÇOS ===');
+        console.error('Erro:', error);
+        console.error('Stack trace:', error.stack);
         showError('Não foi possível carregar os serviços. Por favor, tente novamente.');
     } finally {
         hideLoading();
+        console.log('=== FIM DO CARREGAMENTO DE SERVIÇOS ===');
     }
 }
 

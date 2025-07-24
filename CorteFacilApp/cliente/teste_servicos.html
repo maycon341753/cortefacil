@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste API Serviços</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .result { background: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .error { background: #ffebee; color: #c62828; }
+        .success { background: #e8f5e8; color: #2e7d32; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Teste da API de Serviços</h1>
+        
+        <div>
+            <label for="salaoId">ID do Salão:</label>
+            <input type="number" id="salaoId" value="1" min="1">
+            <button onclick="testarAPI()">Testar API</button>
+            <button onclick="buscarSalaoEduardo()">Buscar Salão do Eduardo</button>
+        </div>
+        
+        <div id="resultado"></div>
+    </div>
+
+    <script>
+        async function buscarSalaoEduardo() {
+            const resultado = document.getElementById('resultado');
+            resultado.innerHTML = '<div class="result">Buscando Salão do Eduardo...</div>';
+            
+            try {
+                // Primeiro buscar todos os salões
+                const response = await fetch('../php/listar_saloes.php');
+                const data = await response.json();
+                
+                if (data.status === 'success' && data.saloes) {
+                    const salaoEduardo = data.saloes.find(salao => 
+                        salao.nome.toLowerCase().includes('eduardo')
+                    );
+                    
+                    if (salaoEduardo) {
+                        document.getElementById('salaoId').value = salaoEduardo.id;
+                        resultado.innerHTML = `
+                            <div class="result success">
+                                <strong>Salão do Eduardo encontrado!</strong><br>
+                                ID: ${salaoEduardo.id}<br>
+                                Nome: ${salaoEduardo.nome}<br>
+                                <button onclick="testarAPI()">Testar Serviços deste Salão</button>
+                            </div>
+                        `;
+                    } else {
+                        resultado.innerHTML = '<div class="result error">Salão do Eduardo não encontrado!</div>';
+                    }
+                } else {
+                    resultado.innerHTML = '<div class="result error">Erro ao buscar salões: ' + (data.message || 'Erro desconhecido') + '</div>';
+                }
+            } catch (error) {
+                resultado.innerHTML = '<div class="result error">Erro: ' + error.message + '</div>';
+            }
+        }
+        
+        async function testarAPI() {
+            const salaoId = document.getElementById('salaoId').value;
+            const resultado = document.getElementById('resultado');
+            
+            if (!salaoId) {
+                resultado.innerHTML = '<div class="result error">Por favor, informe o ID do salão</div>';
+                return;
+            }
+            
+            resultado.innerHTML = '<div class="result">Testando API...</div>';
+            
+            try {
+                const url = `../php/listar_servicos.php?salao_id=${salaoId}`;
+                console.log('URL:', url);
+                
+                const response = await fetch(url);
+                console.log('Response status:', response.status);
+                
+                const responseText = await response.text();
+                console.log('Response text:', responseText);
+                
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (parseError) {
+                    resultado.innerHTML = `
+                        <div class="result error">
+                            <strong>Erro ao fazer parse do JSON:</strong><br>
+                            ${parseError.message}<br><br>
+                            <strong>Resposta do servidor:</strong><br>
+                            <pre>${responseText}</pre>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                console.log('Data:', data);
+                
+                let html = `
+                    <div class="result ${data.status === 'success' ? 'success' : 'error'}">
+                        <strong>Resultado da API:</strong><br>
+                        Status: ${data.status}<br>
+                `;
+                
+                if (data.status === 'success') {
+                    if (data.data && Array.isArray(data.data)) {
+                        html += `Número de serviços: ${data.data.length}<br><br>`;
+                        
+                        if (data.data.length > 0) {
+                            html += '<strong>Serviços encontrados:</strong><br>';
+                            data.data.forEach((servico, index) => {
+                                html += `
+                                    ${index + 1}. ${servico.nome} - ${servico.preco_formatado} - ${servico.duracao_minutos} min<br>
+                                `;
+                            });
+                        } else {
+                            html += '<em>Nenhum serviço encontrado para este salão.</em>';
+                        }
+                    } else {
+                        html += 'Dados inválidos recebidos da API';
+                    }
+                } else {
+                    html += `Erro: ${data.message || 'Erro desconhecido'}`;
+                }
+                
+                html += `
+                        <br><br>
+                        <strong>Resposta completa:</strong><br>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+                
+                resultado.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Erro:', error);
+                resultado.innerHTML = `
+                    <div class="result error">
+                        <strong>Erro na requisição:</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        // Buscar automaticamente o Salão do Eduardo ao carregar a página
+        window.onload = function() {
+            buscarSalaoEduardo();
+        };
+    </script>
+</body>
+</html>

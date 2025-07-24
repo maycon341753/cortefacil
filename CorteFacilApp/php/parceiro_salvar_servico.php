@@ -21,6 +21,10 @@ if (empty($dados['nome']) || empty($dados['duracao_minutos']) || empty($dados['p
     exit;
 }
 
+// Define valores padrão
+$descricao = isset($dados['descricao']) ? $dados['descricao'] : '';
+$ativo = isset($dados['ativo']) ? (int)$dados['ativo'] : 1;
+
 try {
     // Se tem ID, atualiza. Se não tem, insere
     if (!empty($dados['id'])) {
@@ -29,7 +33,9 @@ try {
             SET 
                 nome = :nome,
                 duracao_minutos = :duracao_minutos,
-                preco = :preco
+                preco = :preco,
+                descricao = :descricao,
+                ativo = :ativo
             WHERE id = :id AND salao_id = :salao_id
         ");
         
@@ -38,21 +44,25 @@ try {
             'nome' => $dados['nome'],
             'duracao_minutos' => $dados['duracao_minutos'],
             'preco' => $dados['preco'],
+            'descricao' => $descricao,
+            'ativo' => $ativo,
             'salao_id' => $_SESSION['salao_id']
         ];
         
     } else {
         $stmt = $conn->prepare("
             INSERT INTO servicos 
-            (nome, duracao_minutos, preco, salao_id)
+            (nome, duracao_minutos, preco, descricao, ativo, salao_id)
             VALUES 
-            (:nome, :duracao_minutos, :preco, :salao_id)
+            (:nome, :duracao_minutos, :preco, :descricao, :ativo, :salao_id)
         ");
         
         $params = [
             'nome' => $dados['nome'],
             'duracao_minutos' => $dados['duracao_minutos'],
             'preco' => $dados['preco'],
+            'descricao' => $descricao,
+            'ativo' => $ativo,
             'salao_id' => $_SESSION['salao_id']
         ];
     }
@@ -68,7 +78,7 @@ try {
     }
     
     echo json_encode([
-        'status' => 'success',
+        'status' => 'sucesso',
         'mensagem' => $mensagem,
         'id' => $id
     ]);
@@ -82,4 +92,4 @@ try {
         'debug' => $e->getMessage()
     ]);
 }
-?> 
+?>

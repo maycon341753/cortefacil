@@ -14,11 +14,15 @@ $salao_id = $_GET['salao_id'];
 
 try {
     $pdo = getConexao();
+    
+    // Buscar apenas serviços que estão vinculados a profissionais ativos do salão
     $stmt = $pdo->prepare("
-        SELECT id, nome, preco, duracao_minutos
-        FROM servicos
-        WHERE salao_id = ? AND ativo = 1
-        ORDER BY nome
+        SELECT DISTINCT s.id, s.nome, s.preco, s.duracao_minutos
+        FROM servicos s
+        INNER JOIN profissional_servicos ps ON s.id = ps.servico_id
+        INNER JOIN profissionais p ON ps.profissional_id = p.id
+        WHERE p.salao_id = ? AND s.ativo = 1 AND p.ativo = 1
+        ORDER BY s.nome
     ");
     
     $stmt->execute([$salao_id]);
@@ -36,6 +40,6 @@ try {
     ]);
 } catch (PDOException $e) {
     http_response_code(500);
-    echo json_encode(['status' => 'error', 'message' => 'Erro ao buscar serviços']);
+    echo json_encode(['status' => 'error', 'message' => 'Erro ao buscar serviços: ' . $e->getMessage()]);
 } 
 ?>

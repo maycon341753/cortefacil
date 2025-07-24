@@ -18,48 +18,363 @@ if (!isset($_SESSION['tipo']) || $_SESSION['tipo'] !== 'salao') {
     <title>Funcionários - CorteFácil</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --warning-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            --card-shadow-hover: 0 20px 40px rgba(0, 0, 0, 0.15);
+            --border-radius: 20px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        /* Navbar Moderna e Tecnológica */
+        .modern-navbar {
+            background: var(--primary-gradient);
+            backdrop-filter: blur(20px);
+            border: none;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 1rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modern-navbar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+            pointer-events: none;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.8rem;
+            color: white !important;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 2;
+        }
+
+        .navbar-brand::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #fff, transparent);
+            transition: width 0.3s ease;
+        }
+
+        .navbar-brand:hover::after {
+            width: 100%;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-weight: 500;
+            padding: 0.8rem 1.2rem !important;
+            border-radius: 12px;
+            transition: var(--transition);
+            position: relative;
+            margin: 0 0.2rem;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: white !important;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            transform: translateY(-2px);
+        }
+
+        .user-info {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 0.8rem 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: var(--transition);
+        }
+
+        .user-info:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .btn-logout {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            font-weight: 500;
+            padding: 0.6rem 1.5rem;
+            border-radius: 12px;
+            transition: var(--transition);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-logout:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Container principal */
+        .main-container {
+            padding: 2.5rem 0;
+        }
+
+        .page-title {
+            font-weight: 700;
+            font-size: 2.5rem;
+            color: #1e293b;
+            margin-bottom: 2rem;
+        }
+
+        /* Cards modernos */
+        .modern-card {
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            border: none;
+            background: white;
+            overflow: hidden;
+            position: relative;
+            transition: var(--transition);
+        }
+
+        .modern-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+        }
+
+        .modern-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--card-shadow-hover);
+        }
+
+        /* Botões modernos */
+        .btn-modern {
+            background: var(--primary-gradient);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 0.8rem 2rem;
+            border-radius: 15px;
+            transition: var(--transition);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+
+        .btn-action {
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            font-weight: 500;
+            transition: var(--transition);
+            border: none;
+            margin: 0 0.2rem;
+        }
+
+        .btn-edit {
+            background: var(--warning-gradient);
+            color: white;
+        }
+
+        .btn-delete {
+            background: var(--secondary-gradient);
+            color: white;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Tabelas modernas */
+        .table {
+            margin: 0;
+        }
+
+        .table th {
+            border: none;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            padding: 1.5rem 1rem;
+            background: #f8fafc;
+        }
+
+        .table td {
+            border: none;
+            padding: 1.5rem 1rem;
+            vertical-align: middle;
+        }
+
+        .table tbody tr {
+            transition: var(--transition);
+        }
+
+        .table tbody tr:hover {
+            background-color: #f8fafc;
+            transform: scale(1.01);
+        }
+
+        /* Badges modernos */
+        .badge-modern {
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            font-weight: 500;
+            font-size: 0.85rem;
+        }
+
+        .badge-success {
+            background: var(--success-gradient);
+        }
+
+        .badge-danger {
+            background: var(--secondary-gradient);
+        }
+
+        /* Modal moderno */
+        .modal-content {
+            border-radius: var(--border-radius);
+            border: none;
+            box-shadow: var(--card-shadow-hover);
+        }
+
+        .modal-header {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+        }
+
+        .modal-title {
+            font-weight: 600;
+        }
+
+        .btn-close {
+            filter: brightness(0) invert(1);
+        }
+
+        .form-control {
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+            padding: 0.8rem 1rem;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .user-info {
+                margin-top: 1rem;
+                text-align: center;
+            }
+            
+            .page-title {
+                font-size: 2rem;
+            }
+            
+            .btn-modern {
+                padding: 0.6rem 1.5rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
 </head>
-<body class="bg-light">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+<body>
+    <nav class="navbar navbar-expand-lg modern-navbar">
         <div class="container">
-            <a class="navbar-brand" href="#">CorteFácil</a>
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-scissors me-2"></i>CorteFácil
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="dashboard.php">Dashboard</a>
+                        <a class="nav-link" href="dashboard.php">
+                            <i class="bi bi-speedometer2 me-1"></i>Dashboard
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="metas.php">Metas</a>
+                        <a class="nav-link" href="metas.php">
+                            <i class="bi bi-target me-1"></i>Metas
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" href="funcionarios.php">Funcionários</a>
+                        <a class="nav-link active" href="funcionarios.php">
+                            <i class="bi bi-people me-1"></i>Funcionários
+                        </a>
                     </li>
                 </ul>
-                <div class="d-flex">
-                    <span class="navbar-text me-3">
-                        Olá, <?php echo htmlspecialchars($_SESSION['nome']); ?>
-                    </span>
-                    <a href="../php/parceiro_login.php?logout=true" class="btn btn-outline-light">Sair</a>
+                <div class="d-flex align-items-center">
+                    <div class="user-info me-3">
+                        <i class="bi bi-person-circle me-2"></i>
+                        <span style="color: white; font-weight: 600;">
+                            <?php echo htmlspecialchars($_SESSION['nome']); ?>
+                        </span>
+                    </div>
+                    <a href="../php/parceiro_login.php?logout=true" class="btn btn-logout">
+                        <i class="bi bi-box-arrow-right me-1"></i>Sair
+                    </a>
                 </div>
             </div>
         </div>
     </nav>
 
-    <div class="container py-5">
+    <div class="container main-container">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Funcionários</h2>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalFuncionarios">
-                <i class="bi bi-plus-lg"></i> Novo Funcionário
+            <h1 class="page-title">Funcionários</h1>
+            <button class="btn btn-modern" data-bs-toggle="modal" data-bs-target="#modalFuncionarios">
+                <i class="bi bi-plus-lg me-2"></i>Novo Funcionário
             </button>
         </div>
 
-        <div class="card">
-            <div class="card-body">
+        <div class="card modern-card">
+            <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover">
+                    <table class="table table-hover mb-0">
                         <thead>
                             <tr>
                                 <th>Nome</th>
@@ -73,7 +388,14 @@ if (!isset($_SESSION['tipo']) || $_SESSION['tipo'] !== 'salao') {
                             </tr>
                         </thead>
                         <tbody id="listaFuncionarios">
-                            <!-- Será preenchido via JavaScript -->
+                            <tr>
+                                <td colspan="8" class="text-center py-5">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Carregando...</span>
+                                    </div>
+                                    <p class="mt-3 text-muted">Carregando funcionários...</p>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -83,53 +405,84 @@ if (!isset($_SESSION['tipo']) || $_SESSION['tipo'] !== 'salao') {
 
     <!-- Modal Cadastro/Edição de Funcionários -->
     <div class="modal fade" id="modalFuncionarios" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Cadastro de Funcionário</h5>
+                    <h5 class="modal-title">
+                        <i class="bi bi-person-plus me-2"></i>Cadastro de Funcionário
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body p-4">
                     <form id="formFuncionario">
                         <input type="hidden" id="idFuncionario">
-                        <div class="mb-3">
-                            <label for="nomeFuncionario" class="form-label">Nome</label>
-                            <input type="text" class="form-control" id="nomeFuncionario" required>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="nomeFuncionario" class="form-label">
+                                    <i class="bi bi-person me-1"></i>Nome
+                                </label>
+                                <input type="text" class="form-control" id="nomeFuncionario" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="emailFuncionario" class="form-label">
+                                    <i class="bi bi-envelope me-1"></i>Email
+                                </label>
+                                <input type="email" class="form-control" id="emailFuncionario" required>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="emailFuncionario" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="emailFuncionario" required>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="senhaFuncionario" class="form-label">
+                                    <i class="bi bi-lock me-1"></i>Senha
+                                </label>
+                                <input type="password" class="form-control" id="senhaFuncionario">
+                                <small class="text-muted">Deixe em branco para manter a senha atual ao editar</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="telefoneFuncionario" class="form-label">
+                                    <i class="bi bi-telephone me-1"></i>Telefone
+                                </label>
+                                <input type="tel" class="form-control" id="telefoneFuncionario">
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="senhaFuncionario" class="form-label">Senha</label>
-                            <input type="password" class="form-control" id="senhaFuncionario">
-                            <small class="text-muted">Deixe em branco para manter a senha atual ao editar</small>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="especialidadeFuncionario" class="form-label">
+                                    <i class="bi bi-scissors me-1"></i>Especialidade
+                                </label>
+                                <input type="text" class="form-control" id="especialidadeFuncionario" placeholder="Ex: Corte Masculino, Barba, Coloração">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="valorServicoFuncionario" class="form-label">
+                                    <i class="bi bi-currency-dollar me-1"></i>Valor do Serviço (R$)
+                                </label>
+                                <input type="number" class="form-control" id="valorServicoFuncionario" step="0.01" min="0" placeholder="0.00">
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="telefoneFuncionario" class="form-label">Telefone</label>
-                            <input type="tel" class="form-control" id="telefoneFuncionario">
-                        </div>
-                        <div class="mb-3">
-                            <label for="especialidadeFuncionario" class="form-label">Especialidade</label>
-                            <input type="text" class="form-control" id="especialidadeFuncionario" placeholder="Ex: Corte Masculino, Barba, Coloração">
-                        </div>
-                        <div class="mb-3">
-                            <label for="valorServicoFuncionario" class="form-label">Valor do Serviço (R$)</label>
-                            <input type="number" class="form-control" id="valorServicoFuncionario" step="0.01" min="0" placeholder="0.00">
-                        </div>
+
                         <div class="row mb-3">
-                            <div class="col">
-                                <label for="horarioInicio" class="form-label">Horário Início</label>
+                            <div class="col-md-6">
+                                <label for="horarioInicio" class="form-label">
+                                    <i class="bi bi-clock me-1"></i>Horário Início
+                                </label>
                                 <input type="time" class="form-control" id="horarioInicio" value="09:00">
                             </div>
-                            <div class="col">
-                                <label for="horarioFim" class="form-label">Horário Fim</label>
+                            <div class="col-md-6">
+                                <label for="horarioFim" class="form-label">
+                                    <i class="bi bi-clock-fill me-1"></i>Horário Fim
+                                </label>
                                 <input type="time" class="form-control" id="horarioFim" value="18:00">
                             </div>
                         </div>
+
                         <div class="mb-3">
-                            <label class="form-label">Dias de Trabalho</label>
-                            <div class="btn-group" role="group">
+                            <label class="form-label">
+                                <i class="bi bi-calendar-week me-1"></i>Dias de Trabalho
+                            </label>
+                            <div class="btn-group d-flex flex-wrap gap-2" role="group">
                                 <input type="checkbox" class="btn-check" id="dia1" value="1" checked>
                                 <label class="btn btn-outline-primary" for="dia1">Seg</label>
                                 <input type="checkbox" class="btn-check" id="dia2" value="2" checked>
@@ -146,13 +499,24 @@ if (!isset($_SESSION['tipo']) || $_SESSION['tipo'] !== 'salao') {
                                 <label class="btn btn-outline-primary" for="dia0">Dom</label>
                             </div>
                         </div>
-                        <div class="mb-3">
+
+                        <div class="mb-4">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="ativoFuncionario" checked>
-                                <label class="form-check-label" for="ativoFuncionario">Ativo</label>
+                                <label class="form-check-label" for="ativoFuncionario">
+                                    <i class="bi bi-toggle-on me-1"></i>Funcionário Ativo
+                                </label>
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary">Salvar</button>
+
+                        <div class="d-flex gap-2 justify-content-end">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                <i class="bi bi-x-lg me-1"></i>Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-modern">
+                                <i class="bi bi-check-lg me-1"></i>Salvar
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -196,15 +560,15 @@ if (!isset($_SESSION['tipo']) || $_SESSION['tipo'] !== 'salao') {
                             <td>${formatarHorario(funcionario.horario_trabalho_inicio)} - ${formatarHorario(funcionario.horario_trabalho_fim)}<br>
                                 <small class="text-muted">${formatarDiasTrabalho(funcionario.dias_trabalho)}</small></td>
                             <td>
-                                <span class="badge ${funcionario.ativo == 1 ? 'bg-success' : 'bg-danger'}">
+                                <span class="badge badge-modern ${funcionario.ativo == 1 ? 'badge-success' : 'badge-danger'}">
                                     ${funcionario.ativo == 1 ? 'Ativo' : 'Inativo'}
                                 </span>
                             </td>
                             <td>
-                                <button class="btn btn-sm btn-primary me-2" onclick='editarFuncionario(${JSON.stringify(funcionario)})'>
+                                <button class="btn btn-action btn-edit" onclick='editarFuncionario(${JSON.stringify(funcionario)})' title="Editar">
                                     <i class="bi bi-pencil"></i>
                                 </button>
-                                <button class="btn btn-sm btn-danger" onclick="excluirFuncionario(${funcionario.id})">
+                                <button class="btn btn-action btn-delete" onclick="excluirFuncionario(${funcionario.id})" title="Excluir">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </td>

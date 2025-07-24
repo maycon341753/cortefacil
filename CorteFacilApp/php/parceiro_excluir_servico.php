@@ -11,8 +11,9 @@ if (!isset($_SESSION['id']) || $_SESSION['tipo'] !== 'salao') {
     exit;
 }
 
-// Recebe o ID do serviço
-$id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+// Recebe os dados JSON
+$input = json_decode(file_get_contents('php://input'), true);
+$id = isset($input['id']) ? (int)$input['id'] : (isset($_POST['id']) ? (int)$_POST['id'] : 0);
 
 if ($id <= 0) {
     http_response_code(400);
@@ -21,10 +22,9 @@ if ($id <= 0) {
 }
 
 try {
-    // Ao invés de excluir, apenas desativa o serviço
+    // Exclui o serviço permanentemente
     $stmt = $conn->prepare("
-        UPDATE servicos 
-        SET ativo = 0 
+        DELETE FROM servicos 
         WHERE id = :id 
         AND salao_id = :salao_id
     ");
@@ -36,7 +36,7 @@ try {
     
     if ($stmt->rowCount() > 0) {
         echo json_encode([
-            'status' => 'success',
+            'status' => 'sucesso',
             'mensagem' => 'Serviço excluído com sucesso'
         ]);
     } else {
@@ -55,4 +55,4 @@ try {
         'mensagem' => 'Erro ao excluir serviço'
     ]);
 }
-?> 
+?>
