@@ -1067,11 +1067,6 @@ function renderAgendamentosPaginados() {
 
 function updatePaginationInfo(start, end, total) {
     const infoElement = document.getElementById('agendamentosInfo');
-    if (total === 0) {
-        infoElement.textContent = 'Nenhum agendamento encontrado';
-    } else {
-        infoElement.textContent = `Mostrando ${start} a ${end} de ${total} agendamentos`;
-    }
 }
 
 function updatePaginationControls(totalPages) {
@@ -1081,8 +1076,12 @@ function updatePaginationControls(totalPages) {
     const paginationList = document.getElementById('paginationList');
     
     // Atualizar botões anterior/próximo
-    btnPrev.disabled = currentPage === 1;
-    btnNext.disabled = currentPage === totalPages || totalPages === 0;
+    if(btnPrev){
+        btnPrev.disabled = currentPage === 1;
+    }
+    if(btnNext){
+        btnNext.disabled = currentPage === totalPages || totalPages === 0;
+    }
     
     // Mostrar/esconder paginação
     if (totalPages <= 1) {
