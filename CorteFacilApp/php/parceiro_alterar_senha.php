@@ -1,21 +1,23 @@
 <?php
+session_start();
 header('Content-Type: application/json');
 require_once 'conexao.php';
-require_once 'autenticacao.php';
 
-// Verifica se o parceiro está autenticado
-if (!verificarAutenticacao() || !verificarTipoUsuario('parceiro')) {
-    echo json_encode(['status' => 'erro', 'mensagem' => 'Usuário não autenticado ou não é parceiro']);
+// Verifica se o usuário está logado e é do tipo 'salao'
+if (!isset($_SESSION['id']) || !isset($_SESSION['tipo']) || $_SESSION['tipo'] !== 'salao') {
+    echo json_encode(['success' => false, 'message' => 'Usuário não autenticado ou não é parceiro']);
     exit;
 }
 
 // Obtém o ID do usuário autenticado
-$usuario_id = $_SESSION['usuario_id'];
+$usuario_id = $_SESSION['id'];
 
 try {
+    $pdo = getConexao();
+    
     // Verifica se todos os campos necessários foram enviados
     if (!isset($_POST['senha_atual']) || !isset($_POST['nova_senha']) || !isset($_POST['confirmar_senha'])) {
-        echo json_encode(['status' => 'erro', 'mensagem' => 'Todos os campos são obrigatórios']);
+        echo json_encode(['success' => false, 'message' => 'Todos os campos são obrigatórios']);
         exit;
     }
     
@@ -25,43 +27,53 @@ try {
     
     // Verifica se a nova senha e a confirmação são iguais
     if ($novaSenha !== $confirmarSenha) {
-        echo json_encode(['status' => 'erro', 'mensagem' => 'A nova senha e a confirmação não coincidem']);
+        echo json_encode(['success' => false, 'message' => 'A nova senha e a confirmação não coincidem']);
         exit;
     }
     
-    // Verifica se a senha atual está correta
-    $stmt = $conexao->prepare("SELECT senha FROM usuarios WHERE id = ?");
-    $stmt->bind_param("i", $usuario_id);
-    $stmt->execute();
-    $resultado = $stmt->get_result();
-    
-    if ($resultado->num_rows === 0) {
-        echo json_encode(['status' => 'erro', 'mensagem' => 'Usuário não encontrado']);
+    // Verifica se a nova senha tem pelo menos 6 caracteres
+    if (strlen($novaSenha) < 6) {
+        echo json_encode(['success' => false, 'message' => 'A nova senha deve ter pelo menos 6 caracteres']);
         exit;
     }
     
-    $usuario = $resultado->fetch_assoc();
+    // Busca o usuário no banco de dados
+    $stmt = $pdo->prepare("SELECT senha FROM usuarios WHERE id = ?");
+    $stmt->execute([$usuario_id]);
+    $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$usuario) {
+        echo json_encode(['success' => false, 'message' => 'Usuário não encontrado']);
+        exit;
+    }
     
     // Verifica se a senha atual está correta
     if (!password_verify($senhaAtual, $usuario['senha'])) {
-        echo json_encode(['status' => 'erro', 'mensagem' => 'Senha atual incorreta']);
-        exit;
+        // Teste adicional: verifica se a senha pode estar em texto plano (caso antigo)
+        if ($senhaAtual === $usuario['senha']) {
+            // Atualiza para hash antes de continuar
+            $senha_hash_temp = password_hash($senhaAtual, PASSWORD_DEFAULT);
+            $stmt_temp = $pdo->prepare("UPDATE usuarios SET senha = ? WHERE id = ?");
+            $stmt_temp->execute([$senha_hash_temp, $usuario_id]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Senha atual incorreta']);
+            exit;
+        }
     }
     
     // Criptografa a nova senha
     $senhaCriptografada = password_hash($novaSenha, PASSWORD_DEFAULT);
     
     // Atualiza a senha no banco de dados
-    $stmt = $conexao->prepare("UPDATE usuarios SET senha = ? WHERE id = ?");
-    $stmt->bind_param("si", $senhaCriptografada, $usuario_id);
-    $stmt->execute();
+    $stmt = $pdo->prepare("UPDATE usuarios SET senha = ? WHERE id = ?");
+    $stmt->execute([$senhaCriptografada, $usuario_id]);
     
-    if ($stmt->affected_rows > 0) {
-        echo json_encode(['status' => 'sucesso', 'mensagem' => 'Senha alterada com sucesso', 'nova_senha' => $novaSenha]);
+    if ($stmt->rowCount() > 0) {
+        echo json_encode(['success' => true, 'message' => 'Senha alterada com sucesso']);
     } else {
-        echo json_encode(['status' => 'erro', 'mensagem' => 'Não foi possível alterar a senha']);
+        echo json_encode(['success' => false, 'message' => 'Não foi possível alterar a senha']);
     }
     
 } catch (Exception $e) {
-    echo json_encode(['status' => 'erro', 'mensagem' => 'Erro ao alterar senha: ' . $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Erro ao alterar senha: ' . $e->getMessage()]);
 }

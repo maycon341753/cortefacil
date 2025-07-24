@@ -112,7 +112,8 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['tipo']) || $_SESSION['tipo'] !=
             <div class="ms-auto">
                 <span class="me-3">
                     <i class="fas fa-user me-2"></i>
-                    <span id="nomeUsuario">Carregando...</span>
+                    <span id="nomeUsuario" style="cursor: pointer; text-decoration: underline; color: #0d6efd;" 
+                          title="Clique para alterar sua senha">Carregando...</span>
                 </span>
             </div>
         </div>
@@ -121,6 +122,57 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['tipo']) || $_SESSION['tipo'] !=
     <!-- Main Content -->
     <div class="main-content">
         <div id="conteudo"></div>
+    </div>
+
+    <!-- Modal Alterar Senha -->
+    <div class="modal fade" id="modalAlterarSenha" tabindex="-1" aria-labelledby="modalAlterarSenhaLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalAlterarSenhaLabel">
+                        <i class="fas fa-key me-2"></i>Alterar Senha
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formAlterarSenha">
+                        <div class="mb-3">
+                            <label for="senhaAtual" class="form-label">Senha Atual</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="senhaAtual" name="senha_atual" required>
+                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('senhaAtual')">
+                                    <i class="fas fa-eye" id="iconSenhaAtual"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="novaSenha" class="form-label">Nova Senha</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="novaSenha" name="nova_senha" required minlength="6">
+                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('novaSenha')">
+                                    <i class="fas fa-eye" id="iconNovaSenha"></i>
+                                </button>
+                            </div>
+                            <div class="form-text">A senha deve ter pelo menos 6 caracteres.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmarSenha" class="form-label">Confirmar Nova Senha</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="confirmarSenha" name="confirmar_senha" required minlength="6">
+                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('confirmarSenha')">
+                                    <i class="fas fa-eye" id="iconConfirmarSenha"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Alterar Senha
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Bootstrap Bundle with Popper -->
@@ -146,6 +198,13 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['tipo']) || $_SESSION['tipo'] !=
                 .fail(function() {
                     window.location.href = 'parceiro_login.html';
                 });
+
+            // Evento para abrir modal de alterar senha
+            $(document).on('click', '#nomeUsuario', function(e) {
+                e.preventDefault();
+                console.log('Clicou no nome do usuário - abrindo modal');
+                $('#modalAlterarSenha').modal('show');
+            });
 
             // Toggle Sidebar
             $('#sidebarToggle').click(function() {
@@ -188,7 +247,89 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['tipo']) || $_SESSION['tipo'] !=
                     $('#conteudo').load(arquivos[secao]);
                 }
             }
+
+            // Função para alterar senha
+            $('#formAlterarSenha').submit(function(e) {
+                e.preventDefault();
+                
+                const senhaAtual = $('#senhaAtual').val();
+                const novaSenha = $('#novaSenha').val();
+                const confirmarSenha = $('#confirmarSenha').val();
+                
+                // Validações
+                if (novaSenha !== confirmarSenha) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro',
+                        text: 'A nova senha e a confirmação não coincidem!'
+                    });
+                    return;
+                }
+                
+                if (novaSenha.length < 6) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro',
+                        text: 'A nova senha deve ter pelo menos 6 caracteres!'
+                    });
+                    return;
+                }
+                
+                // Enviar dados para o servidor
+                $.ajax({
+                    url: 'php/parceiro_alterar_senha.php',
+                    method: 'POST',
+                    data: {
+                        senha_atual: senhaAtual,
+                        nova_senha: novaSenha,
+                        confirmar_senha: confirmarSenha
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.status === 'sucesso') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Sucesso!',
+                                text: 'Senha alterada com sucesso!',
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                            $('#modalAlterarSenha').modal('hide');
+                            $('#formAlterarSenha')[0].reset();
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro',
+                                text: response.mensagem || 'Erro ao alterar senha'
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro',
+                            text: 'Erro de comunicação com o servidor'
+                        });
+                    }
+                });
+            });
         });
+
+        // Função para mostrar/ocultar senha
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            const icon = document.getElementById('icon' + fieldId.charAt(0).toUpperCase() + fieldId.slice(1));
+            
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                field.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
     </script>
 </body>
 </html>

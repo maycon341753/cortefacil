@@ -14,11 +14,27 @@ require_once 'conexao.php';
 header('Content-Type: application/json');
 
 // Recebe os dados do POST
-$email = isset($_POST['email']) ? trim($_POST['email']) : '';
+$cpf = isset($_POST['cpf']) ? trim($_POST['cpf']) : '';
 $senha = isset($_POST['senha']) ? $_POST['senha'] : '';
 
+// Função para formatar CPF
+function formatarCPF($cpf) {
+    // Remove tudo que não é dígito
+    $cpf = preg_replace('/\D/', '', $cpf);
+    
+    // Aplica a formatação
+    if (strlen($cpf) == 11) {
+        return substr($cpf, 0, 3) . '.' . substr($cpf, 3, 3) . '.' . substr($cpf, 6, 3) . '-' . substr($cpf, 9, 2);
+    }
+    
+    return $cpf;
+}
+
+// Formatar o CPF para busca no banco
+$cpf_formatado = formatarCPF($cpf);
+
 // Validação básica
-if (empty($email) || empty($senha)) {
+if (empty($cpf) || empty($senha)) {
     http_response_code(400);
     echo json_encode([
         'status' => 'error',
@@ -28,17 +44,17 @@ if (empty($email) || empty($senha)) {
 }
 
 try {
-    // Busca o usuário pelo email e tipo 'salao'
+    // Busca o usuário pelo CPF e tipo 'salao'
     $stmt = $conn->prepare("
         SELECT u.id, u.senha, u.nome, s.id as salao_id, s.nome_fantasia
         FROM usuarios u
         JOIN saloes s ON s.usuario_id = u.id
         WHERE u.tipo = 'salao' 
-        AND u.email = :email
+        AND u.cpf = :cpf
         AND s.ativo = 1
     ");
     
-    $stmt->execute(['email' => $email]);
+    $stmt->execute(['cpf' => $cpf_formatado]);
     $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($usuario && password_verify($senha, $usuario['senha'])) {
@@ -57,7 +73,7 @@ try {
         http_response_code(401);
         echo json_encode([
             'status' => 'error',
-            'mensagem' => 'Email ou senha incorretos'
+            'mensagem' => 'CPF ou senha incorretos'
         ]);
     }
 

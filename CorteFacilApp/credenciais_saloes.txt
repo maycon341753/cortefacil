@@ -1,0 +1,50 @@
+CREDENCIAIS DOS SALÕES/PARCEIROS - CORTE FÁCIL
+=============================================
+
+✅ PROBLEMA RESOLVIDO: Login funcionando perfeitamente!
+
+CORREÇÃO REALIZADA:
+- O frontend enviava CPF sem formatação (ex: 12345678901)
+- O banco tinha CPFs com formatação (ex: 123.456.789-01)
+- Corrigido o arquivo PHP para aceitar ambos os formatos
+
+CREDENCIAIS PARA TESTE:
+======================
+
+1. Salão do Helio
+   CPF: 123.456.789-01 (ou 12345678901)
+   Senha: 123456
+
+2. Salão Teste  
+   CPF: 234.567.890-12 (ou 23456789012)
+   Senha: 123456
+
+3. Barbearia Moderna
+   CPF: 345.678.901-23 (ou 34567890123)
+   Senha: 123456
+
+4. Liz Hadassa Maitê Silva
+   CPF: 978.627.277-38 (ou 97862727738)
+   Senha: 123456
+
+5. Barbearia Central
+   CPF: 456.789.012-34 (ou 45678901234)
+   Senha: 123456
+
+6. Salão Elegante
+   CPF: 567.890.123-45 (ou 56789012345)
+   Senha: 123456
+
+7. Salão do Eduardo
+   CPF: 226.356.552-35 (ou 22635655235)
+   Senha: 123456
+
+URL DE LOGIN: http://localhost/cortefacil/CorteFacilApp/parceiro_login.html
+
+INSTRUÇÕES:
+1. Acesse a URL acima
+2. Digite qualquer um dos CPFs listados (com ou sem formatação)
+3. Digite a senha: 123456
+4. Clique em "Entrar"
+
+✅ SISTEMA FUNCIONANDO CORRETAMENTE!

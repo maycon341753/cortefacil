@@ -20,6 +20,7 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['tipo']) || $_SESSION['tipo'] !=
     <title>Dashboard - CorteFácil</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         .dashboard-card {
             border-radius: 15px;
@@ -56,7 +57,8 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['tipo']) || $_SESSION['tipo'] !=
                 </ul>
                 <div class="d-flex">
                     <span class="navbar-text me-3">
-                        Olá, <?php echo htmlspecialchars($_SESSION['nome']); ?>
+                        Olá, <span id="nomeUsuario" style="cursor: pointer; text-decoration: underline; color: #ffffff;" 
+                                   title="Clique para alterar sua senha"><?php echo htmlspecialchars($_SESSION['nome']); ?></span>
                     </span>
                     <a href="../php/parceiro_login.php?logout=true" class="btn btn-outline-light">Sair</a>
                 </div>
@@ -155,6 +157,57 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['tipo']) || $_SESSION['tipo'] !=
         </div>
     </div>
 
+    <!-- Modal Alterar Senha -->
+    <div class="modal fade" id="modalAlterarSenha" tabindex="-1" aria-labelledby="modalAlterarSenhaLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalAlterarSenhaLabel">
+                        <i class="bi bi-key me-2"></i>Alterar Senha
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formAlterarSenha">
+                        <div class="mb-3">
+                            <label for="senhaAtual" class="form-label">Senha Atual</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="senhaAtual" name="senha_atual" required>
+                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('senhaAtual')">
+                                    <i class="bi bi-eye" id="iconSenhaAtual"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="novaSenha" class="form-label">Nova Senha</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="novaSenha" name="nova_senha" required minlength="6">
+                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('novaSenha')">
+                                    <i class="bi bi-eye" id="iconNovaSenha"></i>
+                                </button>
+                            </div>
+                            <div class="form-text">A senha deve ter pelo menos 6 caracteres.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmarSenha" class="form-label">Confirmar Nova Senha</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="confirmarSenha" name="confirmar_senha" required minlength="6">
+                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('confirmarSenha')">
+                                    <i class="bi bi-eye" id="iconConfirmarSenha"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-lg me-2"></i>Alterar Senha
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Cadastro de Funcionários -->
     <div class="modal fade" id="modalFuncionarios" tabindex="-1">
         <div class="modal-dialog">
@@ -185,6 +238,7 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['tipo']) || $_SESSION['tipo'] !=
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         // Função para carregar os dados do dashboard
@@ -295,6 +349,92 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['tipo']) || $_SESSION['tipo'] !=
                 alert('Erro ao cadastrar funcionário. Tente novamente.');
             }
         });
+
+        // Funcionalidade de alteração de senha
+    $(document).on('click', '#nomeUsuario', function(e) {
+        e.preventDefault();
+        console.log('Clique no nome do usuário detectado');
+        $('#modalAlterarSenha').modal('show');
+    });
+
+    // Função para alternar visibilidade da senha
+    function togglePassword(fieldId) {
+        const field = document.getElementById(fieldId);
+        const icon = document.getElementById('icon' + fieldId.charAt(0).toUpperCase() + fieldId.slice(1));
+        
+        if (field.type === 'password') {
+            field.type = 'text';
+            icon.className = 'bi bi-eye-slash';
+        } else {
+            field.type = 'password';
+            icon.className = 'bi bi-eye';
+        }
+    }
+
+    // Submissão do formulário de alteração de senha
+    $('#formAlterarSenha').on('submit', function(e) {
+        e.preventDefault();
+        
+        const senhaAtual = $('#senhaAtual').val();
+        const novaSenha = $('#novaSenha').val();
+        const confirmarSenha = $('#confirmarSenha').val();
+        
+        // Validações
+        if (novaSenha.length < 6) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erro',
+                text: 'A nova senha deve ter pelo menos 6 caracteres.'
+            });
+            return;
+        }
+        
+        if (novaSenha !== confirmarSenha) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erro',
+                text: 'As senhas não coincidem.'
+            });
+            return;
+        }
+        
+        // Enviar dados via AJAX
+        $.ajax({
+            url: '../php/parceiro_alterar_senha.php',
+            type: 'POST',
+            data: {
+                senha_atual: senhaAtual,
+                nova_senha: novaSenha,
+                confirmar_senha: confirmarSenha
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Sucesso!',
+                        text: response.message
+                    }).then(() => {
+                        $('#modalAlterarSenha').modal('hide');
+                        $('#formAlterarSenha')[0].reset();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro',
+                        text: response.message
+                    });
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro',
+                    text: 'Erro ao alterar senha. Tente novamente.'
+                });
+            }
+        });
+    });
     </script>
 </body>
 </html>

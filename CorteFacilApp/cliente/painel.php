@@ -936,7 +936,7 @@ try {
                     <ul>
                         <li><i class="bi bi-envelope me-2"></i> contato@cortefacil.com</li>
                         <li><i class="bi bi-telephone me-2"></i> (11) 99999-9999</li>
-                        <li><i class="bi bi-geo-alt me-2"></i> São Paulo, SP</li>
+                        <li><i class="bi bi-geo-alt me-2"></i> Brasilia, DF</li>
                     </ul>
                 </div>
             </div>
