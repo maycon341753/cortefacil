@@ -20,112 +20,380 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['tipo']) || $_SESSION['tipo'] !=
     <title>Dashboard - CorteFácil</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        .dashboard-card {
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --warning-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            --card-shadow-hover: 0 20px 40px rgba(0, 0, 0, 0.15);
+            --border-radius: 20px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        /* Navbar Moderna e Tecnológica */
+        .modern-navbar {
+            background: var(--primary-gradient);
+            backdrop-filter: blur(20px);
+            border: none;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 1rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modern-navbar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+            pointer-events: none;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.8rem;
+            color: white !important;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 2;
+        }
+
+        .navbar-brand::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #fff, transparent);
+            transition: width 0.3s ease;
+        }
+
+        .navbar-brand:hover::after {
+            width: 100%;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-weight: 500;
+            padding: 0.8rem 1.2rem !important;
+            border-radius: 12px;
+            transition: var(--transition);
+            position: relative;
+            margin: 0 0.2rem;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: white !important;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            transform: translateY(-2px);
+        }
+
+        .user-info {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
             border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s;
+            padding: 0.8rem 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: var(--transition);
         }
+
+        .user-info:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+        }
+
+        #nomeUsuario {
+            color: white !important;
+            font-weight: 600;
+            text-decoration: none !important;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        #nomeUsuario:hover {
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+        }
+
+        .btn-logout {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            font-weight: 500;
+            padding: 0.6rem 1.5rem;
+            border-radius: 12px;
+            transition: var(--transition);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-logout:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Dashboard Cards Modernos */
+        .dashboard-card {
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+            border: none;
+            background: white;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .dashboard-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+        }
+
         .dashboard-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-8px);
+            box-shadow: var(--card-shadow-hover);
         }
+
+        .dashboard-card .card-body {
+            padding: 2rem;
+        }
+
         .stat-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .card-title {
+            font-weight: 600;
+            color: #64748b;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-text {
+            font-weight: 700;
+            font-size: 2.2rem;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        /* Cores específicas para cada card */
+        .card-agendamentos::before { background: var(--primary-gradient); }
+        .card-agendamentos .stat-icon { background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .card-faturamento::before { background: var(--success-gradient); }
+        .card-faturamento .stat-icon { background: var(--success-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .card-clientes::before { background: var(--secondary-gradient); }
+        .card-clientes .stat-icon { background: var(--secondary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .card-meta::before { background: var(--warning-gradient); }
+        .card-meta .stat-icon { background: var(--warning-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        /* Container principal */
+        .main-container {
+            padding: 2.5rem 0;
+        }
+
+        .page-title {
+            font-weight: 700;
             font-size: 2.5rem;
-            margin-bottom: 15px;
+            color: #1e293b;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        /* Tabelas e gráficos */
+        .table-card {
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            border: none;
+            overflow: hidden;
+        }
+
+        .table-card .card-header {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 1.5rem;
+        }
+
+        .table-card .card-header h5 {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .table {
+            margin: 0;
+        }
+
+        .table th {
+            border: none;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            padding: 1rem;
+        }
+
+        .table td {
+            border: none;
+            padding: 1rem;
+            vertical-align: middle;
+        }
+
+        .table tbody tr {
+            transition: var(--transition);
+        }
+
+        .table tbody tr:hover {
+            background-color: #f8fafc;
+            transform: scale(1.01);
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .user-info {
+                margin-top: 1rem;
+                text-align: center;
+            }
+            
+            .page-title {
+                font-size: 2rem;
+            }
+            
+            .dashboard-card .card-body {
+                padding: 1.5rem;
+            }
         }
     </style>
 </head>
-<body class="bg-light">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+<body>
+    <nav class="navbar navbar-expand-lg modern-navbar">
         <div class="container">
-            <a class="navbar-brand" href="#">CorteFácil</a>
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-scissors me-2"></i>CorteFácil
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link active" href="dashboard.php">Dashboard</a>
+                        <a class="nav-link active" href="dashboard.php">
+                            <i class="bi bi-speedometer2 me-1"></i>Dashboard
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="metas.php">Metas</a>
+                        <a class="nav-link" href="metas.php">
+                            <i class="bi bi-target me-1"></i>Metas
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="funcionarios.php">Funcionários</a>
+                        <a class="nav-link" href="funcionarios.php">
+                            <i class="bi bi-people me-1"></i>Funcionários
+                        </a>
                     </li>
                 </ul>
-                <div class="d-flex">
-                    <span class="navbar-text me-3">
-                        Olá, <span id="nomeUsuario" style="cursor: pointer; text-decoration: underline; color: #ffffff;" 
-                                   title="Clique para alterar sua senha"><?php echo htmlspecialchars($_SESSION['nome']); ?></span>
-                    </span>
-                    <a href="../php/parceiro_login.php?logout=true" class="btn btn-outline-light">Sair</a>
+                <div class="d-flex align-items-center">
+                    <div class="user-info me-3">
+                        <i class="bi bi-person-circle me-2"></i>
+                        <span id="nomeUsuario" title="Clique para alterar sua senha">
+                            <?php echo htmlspecialchars($_SESSION['nome']); ?>
+                        </span>
+                    </div>
+                    <a href="../php/parceiro_login.php?logout=true" class="btn btn-logout">
+                        <i class="bi bi-box-arrow-right me-1"></i>Sair
+                    </a>
                 </div>
             </div>
         </div>
     </nav>
 
-    <div class="container py-5">
-        <h2 class="mb-4">Dashboard</h2>
+    <div class="container main-container">
+        <h1 class="page-title">Dashboard</h1>
         
-        <div class="row g-4">
-            <!-- Card de Agendamentos do Dia -->
-            <div class="col-md-6 col-lg-3">
-                <div class="card dashboard-card h-100 bg-white">
+        <!-- Cards de Estatísticas -->
+        <div class="row g-4 mb-5">
+            <div class="col-lg-3 col-md-6">
+                <div class="card dashboard-card card-agendamentos h-100">
                     <div class="card-body text-center">
-                        <i class="bi bi-calendar-check text-primary stat-icon"></i>
-                        <h5 class="card-title">Agendamentos Hoje</h5>
-                        <h3 class="card-text" id="agendamentosHoje">0</h3>
+                        <i class="bi bi-calendar-check stat-icon"></i>
+                        <h6 class="card-title">Agendamentos Hoje</h6>
+                        <p class="card-text" id="agendamentosHoje">0</p>
                     </div>
                 </div>
             </div>
-
-            <!-- Card de Faturamento do Dia -->
-            <div class="col-md-6 col-lg-3">
-                <div class="card dashboard-card h-100 bg-white">
+            <div class="col-lg-3 col-md-6">
+                <div class="card dashboard-card card-faturamento h-100">
                     <div class="card-body text-center">
-                        <i class="bi bi-currency-dollar text-success stat-icon"></i>
-                        <h5 class="card-title">Faturamento Hoje</h5>
-                        <h3 class="card-text" id="faturamentoHoje">R$ 0,00</h3>
+                        <i class="bi bi-currency-dollar stat-icon"></i>
+                        <h6 class="card-title">Faturamento Hoje</h6>
+                        <p class="card-text" id="faturamentoHoje">R$ 0,00</p>
                     </div>
                 </div>
             </div>
-
-            <!-- Card de Clientes Atendidos no Mês -->
-            <div class="col-md-6 col-lg-3">
-                <div class="card dashboard-card h-100 bg-white">
+            <div class="col-lg-3 col-md-6">
+                <div class="card dashboard-card card-clientes h-100">
                     <div class="card-body text-center">
-                        <i class="bi bi-people text-info stat-icon"></i>
-                        <h5 class="card-title">Clientes no Mês</h5>
-                        <h3 class="card-text" id="clientesMes">0</h3>
+                        <i class="bi bi-people stat-icon"></i>
+                        <h6 class="card-title">Clientes no Mês</h6>
+                        <p class="card-text" id="clientesMes">0</p>
                     </div>
                 </div>
             </div>
-
-            <!-- Card de Meta Mensal -->
-            <div class="col-md-6 col-lg-3">
-                <div class="card dashboard-card h-100 bg-white">
+            <div class="col-lg-3 col-md-6">
+                <div class="card dashboard-card card-meta h-100">
                     <div class="card-body text-center">
-                        <i class="bi bi-graph-up text-warning stat-icon"></i>
-                        <h5 class="card-title">Meta Mensal</h5>
-                        <h3 class="card-text" id="metaMensal">0%</h3>
+                        <i class="bi bi-graph-up stat-icon"></i>
+                        <h6 class="card-title">Meta Mensal</h6>
+                        <p class="card-text" id="metaMensal">0%</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Gráficos e Tabelas -->
-        <div class="row mt-5 g-4">
+        <!-- Seção de Últimos Agendamentos e Gráfico -->
+        <div class="row g-4">
             <!-- Últimos Agendamentos -->
-            <div class="col-md-6">
-                <div class="card dashboard-card">
-                    <div class="card-header bg-white">
-                        <h5 class="card-title mb-0">Últimos Agendamentos</h5>
+            <div class="col-lg-8">
+                <div class="card table-card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-clock-history me-2"></i>Últimos Agendamentos</h5>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table table-hover">
+                            <table class="table table-hover mb-0">
                                 <thead>
                                     <tr>
                                         <th>Cliente</th>
@@ -135,7 +403,13 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['tipo']) || $_SESSION['tipo'] !=
                                     </tr>
                                 </thead>
                                 <tbody id="ultimosAgendamentos">
-                                    <!-- Será preenchido via JavaScript -->
+                                    <tr>
+                                        <td colspan="4" class="text-center py-4">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">Carregando...</span>
+                                            </div>
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -144,13 +418,13 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['tipo']) || $_SESSION['tipo'] !=
             </div>
 
             <!-- Faturamento Semanal -->
-            <div class="col-md-6">
-                <div class="card dashboard-card">
-                    <div class="card-header bg-white">
-                        <h5 class="card-title mb-0">Faturamento Semanal</h5>
+            <div class="col-lg-4">
+                <div class="card table-card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-bar-chart me-2"></i>Faturamento Semanal</h5>
                     </div>
                     <div class="card-body">
-                        <canvas id="graficoFaturamento"></canvas>
+                        <canvas id="faturamentoChart" width="400" height="300"></canvas>
                     </div>
                 </div>
             </div>
