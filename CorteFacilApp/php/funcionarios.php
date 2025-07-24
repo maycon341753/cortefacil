@@ -96,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     try {
         $salao_id = $_SESSION['salao_id'];
         
-        $sql = "SELECT id, nome, email, telefone, horario_trabalho_inicio, horario_trabalho_fim, dias_trabalho 
+        $sql = "SELECT id, nome, email, telefone, horario_trabalho_inicio, horario_trabalho_fim, dias_trabalho, ativo 
                 FROM funcionarios 
                 WHERE salao_id = ?";
         $stmt = $conn->prepare($sql);
@@ -135,8 +135,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit;
             }
             
-            $sql = "INSERT INTO funcionarios (nome, email, senha, telefone, salao_id, horario_trabalho_inicio, horario_trabalho_fim, dias_trabalho) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)";;
+            $sql = "INSERT INTO funcionarios (nome, email, senha, telefone, salao_id, horario_trabalho_inicio, horario_trabalho_fim, dias_trabalho, ativo) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = $conn->prepare($sql);
             $stmt->execute([
                 $dados['nome'],
@@ -146,7 +146,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['salao_id'],
                 $dados['horario_trabalho_inicio'] ?? '09:00',
                 $dados['horario_trabalho_fim'] ?? '18:00',
-                $dados['dias_trabalho'] ?? '1,2,3,4,5,6'
+                $dados['dias_trabalho'] ?? '1,2,3,4,5,6',
+                $dados['ativo'] ?? 1
             ]);
             
             // Obter o ID do funcionário recém-criado
