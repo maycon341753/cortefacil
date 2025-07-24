@@ -27,11 +27,11 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
             'nome' => $_SESSION['user_name'] ?? 'Administrador'
         ]);
     } else {
-        session_destroy(); // Destrói a sessão se estiver inválida
+        // Não destruir a sessão automaticamente - apenas retornar erro
         http_response_code(401);
         echo json_encode([
             'status' => 'error',
-            'mensagem' => 'Administrador não autenticado'
+            'mensagem' => 'Usuário não autenticado como administrador'
         ]);
     }
     exit;
