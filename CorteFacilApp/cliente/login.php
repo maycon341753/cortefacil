@@ -14,6 +14,10 @@
             align-items: center;
             justify-content: center;
         }
+        .container{
+            display: flex;
+            justify-content: center;
+        }
         .login-container {
             max-width: 400px;
             width: 100%;
