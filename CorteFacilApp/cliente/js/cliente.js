@@ -2,6 +2,7 @@
 let currentStep = 1;
 let agendamentoModal;
 let selectedSalao = null;
+let selectedSalaoData = null; // Dados completos do salão selecionado
 let selectedServico = null;
 let selectedProfissional = null;
 let selectedData = null;
@@ -435,6 +436,16 @@ function formatarEndereco(salao) {
 async function selectSalao(salaoId) {
     try {
         selectedSalao = salaoId;
+        
+        // Buscar dados completos do salão selecionado
+        const response = await fetch(`../php/listar_saloes.php`);
+        if (response.ok) {
+            const data = await response.json();
+            if (data.status === 'success' && data.saloes) {
+                selectedSalaoData = data.saloes.find(salao => salao.id == salaoId);
+            }
+        }
+        
         currentStep = 1;
         
         // Mostrar modal de agendamento
@@ -1360,6 +1371,8 @@ function validarEtapaAtual() {
 // Função para resetar modal
 function resetarModal() {
     currentStep = 1;
+    selectedSalao = null;
+    selectedSalaoData = null;
     selectedServico = null;
     selectedProfissional = null;
     selectedData = null;
@@ -1382,8 +1395,13 @@ function resetarModal() {
 // Função para atualizar resumo no modal
 function updateModalResumo() {
     const formattedDate = selectedData.toLocaleDateString('pt-BR');
+    const salaoNome = selectedSalaoData ? selectedSalaoData.nome : 'Salão não identificado';
+    
     document.getElementById('modalResumoAgendamento').innerHTML = `
         <h4 class="mb-4">Resumo do Agendamento</h4>
+        <div class="mb-3">
+            <strong>Salão:</strong> ${salaoNome}
+        </div>
         <div class="mb-3">
             <strong>Serviço:</strong> ${document.querySelector('.service-card.selected .card-title').textContent}
         </div>
