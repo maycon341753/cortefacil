@@ -17,11 +17,19 @@ try {
 
     $pdo = getConexao();
     
+    // LIMPEZA AUTOMÁTICA: Remover agendamentos com mais de 30 dias
+    $dataLimite = date('Y-m-d H:i:s', strtotime('-30 days'));
+    $sqlLimpeza = "DELETE FROM agendamentos WHERE criado_em < :data_limite";
+    $stmtLimpeza = $pdo->prepare($sqlLimpeza);
+    $stmtLimpeza->execute(['data_limite' => $dataLimite]);
+    
+    // Buscar agendamentos confirmados do cliente
     $sql = "SELECT 
                 a.id,
                 a.data,
                 a.hora,
                 a.status,
+                a.criado_em,
                 s.nome_fantasia as salao,
                 p.nome as profissional,
                 serv.nome as servico,
@@ -30,8 +38,9 @@ try {
             JOIN saloes s ON a.salao_id = s.id
             JOIN profissionais p ON a.profissional_id = p.id
             JOIN servicos serv ON a.servico_id = serv.id
-            WHERE a.cliente_id = :cliente_id
-            ORDER BY a.data DESC, a.hora DESC";
+            WHERE a.cliente_id = :cliente_id 
+            AND a.status = 'confirmado'
+            ORDER BY a.criado_em DESC";
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute(['cliente_id' => $_SESSION['id']]);

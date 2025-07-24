@@ -702,7 +702,14 @@ async function loadHorarios() {
         }
 
         const formattedDate = selectedData.toISOString().split('T')[0];
-        const response = await fetch(`../php/listar_horarios_disponiveis.php?salao_id=${selectedSalao}&profissional_id=${selectedProfissional}&data=${formattedDate}`);
+        
+        // Incluir servico_id na URL se estiver disponível
+        let url = `../php/listar_horarios_disponiveis.php?salao_id=${selectedSalao}&profissional_id=${selectedProfissional}&data=${formattedDate}`;
+        if (selectedServico) {
+            url += `&servico_id=${selectedServico}`;
+        }
+        
+        const response = await fetch(url);
         
         if (!response.ok) {
             throw new Error(`Erro HTTP: ${response.status}`);

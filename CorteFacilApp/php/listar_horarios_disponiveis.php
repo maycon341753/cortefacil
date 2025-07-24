@@ -9,6 +9,7 @@ try {
 
     $salao_id = filter_input(INPUT_GET, 'salao_id', FILTER_VALIDATE_INT);
     $profissional_id = filter_input(INPUT_GET, 'profissional_id', FILTER_VALIDATE_INT);
+    $servico_id = filter_input(INPUT_GET, 'servico_id', FILTER_VALIDATE_INT); // Novo parâmetro
     $data = htmlspecialchars(trim($_GET['data']));
 
     if (!$salao_id || !$profissional_id || !$data) {
@@ -41,15 +42,30 @@ try {
     $fechamento = new DateTime($data . ' ' . $salao['horario_fechamento']);
     $intervalo = $salao['intervalo_agendamento'] ?? 30; // Intervalo padrão de 30 minutos
 
-    // Busca horários já agendados
-    $stmt = $pdo->prepare("
+    // Obter horário atual
+    $agora = new DateTime();
+    $dataHoje = $agora->format('Y-m-d');
+    $horarioAtualStr = $agora->format('H:i');
+
+    // Busca horários já agendados para o mesmo profissional e serviço
+    $queryHorariosOcupados = "
         SELECT TIME_FORMAT(hora, '%H:%i') as horario
         FROM agendamentos 
         WHERE profissional_id = ? 
         AND data = ?
         AND status NOT IN ('CANCELADO')
-    ");
-    $stmt->execute([$profissional_id, $data]);
+    ";
+    
+    $parametros = [$profissional_id, $data];
+    
+    // Se o serviço_id foi fornecido, adiciona filtro por serviço
+    if ($servico_id) {
+        $queryHorariosOcupados .= " AND servico_id = ?";
+        $parametros[] = $servico_id;
+    }
+    
+    $stmt = $pdo->prepare($queryHorariosOcupados);
+    $stmt->execute($parametros);
     $horariosOcupados = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
     // Gera lista de horários disponíveis
@@ -59,7 +75,15 @@ try {
     while ($horarioAtual <= $fechamento) {
         $horarioStr = $horarioAtual->format('H:i');
         
-        if (!in_array($horarioStr, $horariosOcupados)) {
+        // Verifica se o horário não está ocupado
+        $horarioDisponivel = !in_array($horarioStr, $horariosOcupados);
+        
+        // Se for hoje, verifica se o horário não passou
+        if ($data === $dataHoje) {
+            $horarioDisponivel = $horarioDisponivel && ($horarioStr > $horarioAtualStr);
+        }
+        
+        if ($horarioDisponivel) {
             $horariosDisponiveis[] = $horarioStr;
         }
         
@@ -83,4 +107,4 @@ try {
         'status' => 'error',
         'message' => 'Erro ao consultar o banco de dados'
     ]);
-} 
+}
