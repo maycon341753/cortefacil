@@ -10,12 +10,38 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
 
+// Verifica se é uma chamada AJAX
+$isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
+
+// Se for uma chamada AJAX, retorna JSON
+if ($isAjax) {
+    header('Content-Type: application/json; charset=utf-8');
+    
+    if (isset($_SESSION['id']) && isset($_SESSION['tipo']) && isset($_SESSION['nome'])) {
+        echo json_encode([
+            'logado' => true,
+            'tipo' => $_SESSION['tipo'],
+            'id' => $_SESSION['id'],
+            'nome' => $_SESSION['nome']
+        ]);
+    } else {
+        http_response_code(401);
+        echo json_encode([
+            'logado' => false,
+            'mensagem' => 'Usuário não autenticado'
+        ]);
+    }
+    exit;
+}
+
+// Para includes PHP, verifica a sessão normalmente
 if (!isset($_SESSION['id']) || !isset($_SESSION['tipo'])) {
     header('Location: ../index.html');
     exit;
 }
 
-if ($_SESSION['tipo'] !== 'cliente' && $_SESSION['tipo'] !== 'admin') {
+// Verifica se o tipo de usuário é válido (removendo a restrição muito específica)
+if (!in_array($_SESSION['tipo'], ['cliente', 'admin', 'salao'])) {
     header('Location: ../index.html');
     exit;
 }

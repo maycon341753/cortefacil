@@ -14,14 +14,21 @@ try {
     }
     $usuario_id = $_SESSION['id'];
 
-    // Buscar agendamentos do usuário
+    // LIMPEZA AUTOMÁTICA: Remover agendamentos com mais de 30 dias
+    $dataLimite = date('Y-m-d H:i:s', strtotime('-30 days'));
+    $sqlLimpeza = "DELETE FROM agendamentos WHERE criado_em < ?";
+    $stmtLimpeza = $conn->prepare($sqlLimpeza);
+    $stmtLimpeza->execute([$dataLimite]);
+
+    // Buscar agendamentos do usuário (apenas confirmados)
     $sql = "SELECT a.*, s.nome_fantasia as nome_salao, p.nome as nome_profissional, sv.nome as nome_servico 
     FROM agendamentos a 
     JOIN saloes s ON a.salao_id = s.id 
     JOIN profissionais p ON a.profissional_id = p.id 
     JOIN servicos sv ON a.servico_id = sv.id 
     WHERE a.cliente_id = ? 
-    ORDER BY a.data DESC, a.hora DESC";
+    AND a.status = 'confirmado'
+    ORDER BY a.criado_em DESC";
 
     $stmt = $conn->prepare($sql);
     $stmt->bindValue(1, $usuario_id, PDO::PARAM_INT);

@@ -60,9 +60,7 @@ try {
             ]
         ]);
     } else {
-        // Usuário não existe no banco - limpar sessão inválida
-        session_destroy();
-        session_start(); // Reinicia uma sessão limpa
+        // Usuário não existe no banco - retornar erro sem destruir a sessão
         
         // Debug: verificar se existem usuários na tabela
         $stmt_count = $pdo->prepare("SELECT COUNT(*) as total FROM usuarios");
@@ -74,16 +72,14 @@ try {
         $stmt_list->execute();
         $usuarios_exemplo = $stmt_list->fetchAll(PDO::FETCH_ASSOC);
         
-        http_response_code(401);
+        http_response_code(404);
         echo json_encode([
-            'error' => 'Sessão inválida - usuário não existe',
-            'message' => 'A sessão foi limpa. Faça login novamente.',
-            'action_required' => 'login',
+            'error' => 'Usuário não encontrado no banco de dados',
+            'message' => 'O usuário da sessão não foi encontrado. Verifique se o usuário ainda existe.',
             'debug' => [
-                'previous_session_user_id' => $session_id,
+                'session_user_id' => $session_id,
                 'total_usuarios_cadastrados' => $total_usuarios,
-                'usuarios_exemplo' => $usuarios_exemplo,
-                'session_cleared' => true
+                'usuarios_exemplo' => $usuarios_exemplo
             ]
         ]);
     }
