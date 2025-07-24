@@ -23,7 +23,7 @@ try {
     $stmtLimpeza = $pdo->prepare($sqlLimpeza);
     $stmtLimpeza->execute(['data_limite' => $dataLimite]);
     
-    // Buscar agendamentos do cliente (confirmados, pagos e realizados)
+    // Buscar TODOS os agendamentos do cliente (confirmados, pagos, realizados e cancelados)
     $sql = "SELECT 
                 a.id,
                 a.data,
@@ -39,8 +39,14 @@ try {
             JOIN profissionais p ON a.profissional_id = p.id
             JOIN servicos serv ON a.servico_id = serv.id
             WHERE a.cliente_id = :cliente_id 
-            AND a.status IN ('confirmado', 'pago', 'realizado')
-            ORDER BY a.criado_em DESC";
+            ORDER BY 
+                CASE 
+                    WHEN a.status IN ('confirmado', 'pago') THEN 1
+                    WHEN a.status = 'realizado' THEN 2
+                    WHEN a.status = 'cancelado' THEN 3
+                    ELSE 4
+                END,
+                a.criado_em DESC";
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute(['cliente_id' => $_SESSION['id']]);
