@@ -1430,7 +1430,25 @@ function resetarModal() {
 // Função para atualizar resumo no modal
 function updateModalResumo() {
     const formattedDate = selectedData.toLocaleDateString('pt-BR');
-    const salaoNome = selectedSalaoData ? selectedSalaoData.nome : 'Salão não identificado';
+    
+    // Tentar obter o nome do salão de diferentes formas
+    let salaoNome = 'Salão não identificado';
+    
+    if (selectedSalaoData && selectedSalaoData.nome) {
+        salaoNome = selectedSalaoData.nome;
+    } else {
+        // Se selectedSalaoData não estiver disponível, tentar buscar pelo ID
+        const salaoCard = document.querySelector(`button[onclick*="selectSalao(${selectedSalao})"]`);
+        if (salaoCard) {
+            const salaoCardParent = salaoCard.closest('.salao-card');
+            if (salaoCardParent) {
+                const nomeElement = salaoCardParent.querySelector('.salao-nome');
+                if (nomeElement) {
+                    salaoNome = nomeElement.textContent;
+                }
+            }
+        }
+    }
     
     document.getElementById('modalResumoAgendamento').innerHTML = `
         <h4 class="mb-4">Resumo do Agendamento</h4>
