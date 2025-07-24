@@ -501,14 +501,6 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['tipo']) || $_SESSION['tipo'] !=
                             <label for="nomeFuncionario" class="form-label">Nome</label>
                             <input type="text" class="form-control" id="nomeFuncionario" required>
                         </div>
-                        <div class="mb-3">
-                            <label for="especialidadeFuncionario" class="form-label">Especialidade</label>
-                            <input type="text" class="form-control" id="especialidadeFuncionario" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="valorFuncionario" class="form-label">Valor do Serviço (R$)</label>
-                            <input type="number" class="form-control" id="valorFuncionario" step="0.01" min="0" required>
-                        </div>
                         <button type="submit" class="btn btn-primary">Cadastrar</button>
                     </form>
                 </div>
@@ -599,9 +591,7 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['tipo']) || $_SESSION['tipo'] !=
             e.preventDefault();
             
             const funcionario = {
-                nome: document.getElementById('nomeFuncionario').value,
-                especialidade: document.getElementById('especialidadeFuncionario').value,
-                valor: document.getElementById('valorFuncionario').value
+                nome: document.getElementById('nomeFuncionario').value
             };
 
             try {
