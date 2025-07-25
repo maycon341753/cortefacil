@@ -1053,6 +1053,15 @@ try {
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2 class="mb-0">Agendamentos</h2>
             </div>
+            
+            <!-- Alerta sobre política de cancelamento -->
+            <div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-3" style="font-size: 1.2rem;"></i>
+                <div>
+                    <strong>Importante:</strong> Caso não compareça no dia e horário do agendamento, o valor não será reembolsado. 
+                    Em caso de cancelamento, também não ressarcimos o valor pago pelo agendamento.
+                </div>
+            </div>
             <div class="row" id="agendamentosList"></div>
             <div class="d-flex justify-content-center mt-4" id="paginationContainer" style="display: none;">
                 <nav aria-label="Navegação de páginas">
