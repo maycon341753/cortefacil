@@ -4,6 +4,9 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+// configurações de conexão ORIGINAIS
+define('DB_HOST', '31.97.18.57');
+define('DB_PORT', '3308');
 // Configurações para PRODUÇÃO (Hostinger)
 define('DB_HOST', 'others_mw-cf');
 define('DB_PORT', '3306');
