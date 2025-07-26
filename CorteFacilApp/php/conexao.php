@@ -1,18 +1,30 @@
 <?php
-// Ativa a exibição de erros no output
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+// Detecta se está em produção (domínio cortefacil.app) ou desenvolvimento (localhost)
+$isProduction = isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'cortefacil.app') !== false;
 
-// configurações de conexão ORIGINAIS
-define('DB_HOST', '31.97.18.57');
-define('DB_PORT', '3308');
-// Configurações para PRODUÇÃO (Hostinger)
-define('DB_HOST', 'others_mw-cf');
-define('DB_PORT', '3306');
-define('DB_NAME', 'cortefacil');
-define('DB_USER', 'mysql');
-define('DB_PASS', 'Brava1997');
+if ($isProduction) {
+    // PRODUÇÃO - Configurações para Hostinger (cortefacil.app)
+    ini_set('display_errors', 0);
+    ini_set('display_startup_errors', 0);
+    error_reporting(0);
+    
+    define('DB_HOST', 'others_mw-cf');
+    define('DB_PORT', '3306');
+    define('DB_NAME', 'cortefacil');
+    define('DB_USER', 'mysql');
+    define('DB_PASS', 'Brava1997');
+} else {
+    // DESENVOLVIMENTO - Configurações locais (XAMPP)
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    error_reporting(E_ALL);
+    
+    define('DB_HOST', '31.97.18.57');
+    define('DB_PORT', '3308');
+    define('DB_NAME', 'cortefacil');
+    define('DB_USER', 'mysql');
+    define('DB_PASS', 'Brava1997');
+}
 
 // Configurações do pool de conexões (com verificação para evitar redefinição)
 if (!defined('POOL_MIN_SIZE')) define('POOL_MIN_SIZE', 2);
